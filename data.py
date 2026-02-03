@@ -882,6 +882,256 @@ ZONE_TO_WIN_DATA = {
     },
 }
 
+# Cross-references linking Zone to Win programs back to Phase 1 & Phase 2 findings
+ZONE_CROSS_REFERENCES = {
+    # ── Performance Zone ──
+    "Business Administration": {
+        "supporting": [
+            {"text": "Strong Star Programs (298 enrolled, +4% growth)", "source": "SWOT Strength (Phase 2)"},
+            {"text": "Recommended to GROW — highest market score among programs", "source": "Gray Associates (Phase 1)"},
+            {"text": "Star quadrant: high SCH share + positive growth", "source": "BCG Matrix (Phase 1)"},
+            {"text": "Strong Employment Score (85/100)", "source": "Gray Associates (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Intensifying Online Competition — large universities erode geographic advantage", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Student Price Sensitivity — bargaining power 4.0/5", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Rising tuition sensitivity among families", "source": "PESTLE Economic (Phase 1)"},
+        ],
+    },
+    "Psychology": {
+        "supporting": [
+            {"text": "Strong Star Programs (227 enrolled, +3% growth)", "source": "SWOT Strength (Phase 2)"},
+            {"text": "Recommended to GROW — strong student demand (85/100)", "source": "Gray Associates (Phase 1)"},
+            {"text": "Star quadrant: growing market share", "source": "BCG Matrix (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Intensifying Online Competition — psychology widely available online", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Alternative Credential Growth — employers accepting non-degree pathways", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Competitive Rivalry 4.5/5 — intense competition from CU/CSU system", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+    },
+    "Engineering": {
+        "supporting": [
+            {"text": "Strong Employment-Aligned Programs (Employment Score 92/100)", "source": "SWOT Strength (Phase 2)"},
+            {"text": "Recommended to GROW — highest employment score of all programs", "source": "Gray Associates (Phase 1)"},
+            {"text": "Expand High-Demand Programs identified as key opportunity", "source": "SWOT Opportunity (Phase 2)"},
+        ],
+        "risks": [
+            {"text": "Remote Location Faculty Recruitment — specialized faculty scarcity increasing", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Supplier Power Medium-High (3.5/5) — Durango cost of living challenges", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "High competition score (55) limits market differentiation", "source": "Gray Associates (Phase 1)"},
+        ],
+    },
+    "Health Sciences": {
+        "supporting": [
+            {"text": "Expand High-Demand Programs — Health Sciences identified for GROW", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Graduate Program Expansion — grad cert immediate opportunity", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Employment Score 85/100, Market Score 76/100", "source": "Gray Associates (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Limited Online Program Offerings — only 25 courses limits reach", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Declining College-Going Rates — national trend hits all programs", "source": "PESTLE Social (Phase 1)"},
+            {"text": "Accreditation compliance requirements for clinical programs", "source": "PESTLE Legal (Phase 1)"},
+        ],
+    },
+    "Computer Information Systems": {
+        "supporting": [
+            {"text": "AI Institute Development — emerging strength in high-demand field", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Strong Employment-Aligned Programs (CIS Employment Score 90/100)", "source": "SWOT Strength (Phase 2)"},
+            {"text": "Recommended to GROW — strong market + economics scores", "source": "Gray Associates (Phase 1)"},
+            {"text": "AI disruption creates curriculum demand", "source": "PESTLE Technological (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Alternative Credential Growth — boot camps and certificates in tech", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Threat of Substitutes 3.5/5 — micro-credentials growing rapidly", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+    },
+    "Exercise Physiology": {
+        "supporting": [
+            {"text": "Expand High-Demand Programs — Exercise Physiology recommended to GROW", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Employment Score 80/100, strong career alignment", "source": "Gray Associates (Phase 1)"},
+            {"text": "Outdoor Recreation & Location Differentiator enhances program appeal", "source": "SWOT Strength (Phase 2)"},
+        ],
+        "risks": [
+            {"text": "Declining Undergraduate Enrollment — overall -13.6% over 10 years", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Student Price Sensitivity — rising tuition concerns", "source": "PESTLE Economic (Phase 1)"},
+        ],
+    },
+    # ── Productivity Zone ──
+    "Advising System Overhaul": {
+        "supporting": [
+            {"text": "Retention Below National Average (66.1% vs 73%) — advising directly addresses gap", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Data analytics for student success and retention identified as need", "source": "PESTLE Technological (Phase 1)"},
+            {"text": "First-Gen students (43%) need additional support infrastructure", "source": "PESTLE Social (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "State Funding Volatility — may constrain technology investment", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Technology infrastructure upgrade needs compete for same funds", "source": "PESTLE Technological (Phase 1)"},
+        ],
+    },
+    "Retention Programs": {
+        "supporting": [
+            {"text": "Retention Below National Average — First-Gen 60.9%, Pell 61.7%, Students of Color 62.6%", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Declining college-going rates make retention more critical than recruitment", "source": "PESTLE Social (Phase 1)"},
+            {"text": "State performance-based funding models reward retention improvement", "source": "PESTLE Political (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Declining Undergraduate Enrollment — fewer students to retain", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Political Pressure on DEI & Public Higher Ed — may affect equity programs", "source": "SWOT Threat (Phase 2)"},
+        ],
+    },
+    "IT Infrastructure": {
+        "supporting": [
+            {"text": "AI Institute Development — requires robust technology platform", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Need for technology infrastructure upgrades identified", "source": "PESTLE Technological (Phase 1)"},
+            {"text": "Online/hybrid program delivery expectations growing", "source": "PESTLE Technological (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "State Funding Volatility — capital expenditure at risk", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Technology vendor dependency rated Moderate", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+    },
+    "Faculty Recruitment Package": {
+        "supporting": [
+            {"text": "Small Class Sizes & Faculty Quality — 98% terminal degrees, 15:1 ratio", "source": "SWOT Strength (Phase 2)"},
+            {"text": "Faculty quality is a core differentiator worth protecting", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Remote Location Faculty Recruitment — Durango cost of living and isolation", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Supplier Power Medium-High (3.5/5) — salary competitiveness below average", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Durango cost of living affecting recruitment rated High and Increasing", "source": "PESTLE Economic (Phase 1)"},
+        ],
+    },
+    "Transfer Pathway Optimization": {
+        "supporting": [
+            {"text": "Dual Enrollment Pipeline Growth — 52 to 235 students (4.5x increase)", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Expand dual enrollment pipeline identified as economic opportunity", "source": "PESTLE Economic (Phase 1)"},
+            {"text": "Community college pathways rated Strong and Increasing", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Competitive Rivalry 4.5/5 — CU/CSU also competing for transfer students", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Community college expansion as Threat of New Entrants", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+    },
+    "Marketing & Communications": {
+        "supporting": [
+            {"text": "Outdoor Recreation & Location Differentiator — powerful recruitment message", "source": "SWOT Strength (Phase 2)"},
+            {"text": "Unique Native American Mission — distinctive institutional identity", "source": "SWOT Strength (Phase 2)"},
+            {"text": "FLC experiential differentiation rated Strong", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Declining College-Going Rates — shrinking prospect pool nationally", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Information transparency High and Increasing — students compare easily", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+    },
+    # ── Incubation Zone ──
+    "AI Institute Expansion": {
+        "supporting": [
+            {"text": "AI Institute Development — emerging strength in high-demand field", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "AI disruption in curriculum and pedagogy creates demand", "source": "PESTLE Technological (Phase 1)"},
+            {"text": "AI Institute at FLC identified as emerging institutional strength", "source": "PESTLE Technological (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Remote Location Faculty Recruitment — specialized AI faculty scarce", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Alternative Credential Growth — tech boot camps compete in AI space", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Threat of New Entrants 3.5/5 — online programs launching rapidly in AI", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+    },
+    "Online Degree Programs": {
+        "supporting": [
+            {"text": "Graduate Program Expansion — 16x growth demonstrates scaling capacity", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Growing demand for flexible/hybrid learning nationally", "source": "PESTLE Social (Phase 1)"},
+            {"text": "Online graduate program expansion identified as tech opportunity", "source": "PESTLE Technological (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Limited Online Program Offerings — only 25 courses currently, significant build needed", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Intensifying Online Competition — large universities dominate online market", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Online degree program growth rated Rapid and Increasing by competitors", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+    },
+    "Micro-Credentials & Badges": {
+        "supporting": [
+            {"text": "Workforce-aligned certificates identified as economic opportunity", "source": "PESTLE Economic (Phase 1)"},
+            {"text": "Expand High-Demand Programs — stackable credentials complement degrees", "source": "SWOT Opportunity (Phase 2)"},
+        ],
+        "risks": [
+            {"text": "Alternative Credential Growth — micro-credential market increasingly crowded", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Micro-credential adoption Growing and Increasing across competitors", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+    },
+    "Dual Enrollment Expansion": {
+        "supporting": [
+            {"text": "Dual Enrollment Pipeline Growth — 4.5x increase, 27 converted FY25", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Expand dual enrollment pipeline for revenue diversification", "source": "PESTLE Economic (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Community college expansion rated Active and Increasing", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Declining College-Going Rates — smaller prospect pool even for dual enrollment", "source": "PESTLE Social (Phase 1)"},
+        ],
+    },
+    "Workforce Development Partnerships": {
+        "supporting": [
+            {"text": "Strong Employment-Aligned Programs — Engineering, CIS, Business, Health Sciences", "source": "SWOT Strength (Phase 2)"},
+            {"text": "Economic diversification in Four Corners region creates employer demand", "source": "PESTLE Economic (Phase 1)"},
+            {"text": "Employer credential acceptance rated Expanding", "source": "Porter's Five Forces (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Alternative Credential Growth — employers may prefer non-degree credentials", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Remote location limits corporate partnership pool", "source": "PESTLE Economic (Phase 1)"},
+        ],
+    },
+    # ── Transformation Zone ──
+    "Indigenous Education Hub": {
+        "supporting": [
+            {"text": "Unique Native American Mission — federal obligation, 166 tribes, 37% waiver", "source": "SWOT Strength (Phase 2)"},
+            {"text": "Indigenous Education National Leadership — premier institution opportunity", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Leverage federal tribal education funding", "source": "PESTLE Political (Phase 1)"},
+            {"text": "Tribal sovereignty considerations enable unique partnerships", "source": "PESTLE Legal (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Political Pressure on DEI & Public Higher Ed — uncertainty for diversity programs", "source": "SWOT Threat (Phase 2)"},
+            {"text": "Tuition Waiver Revenue Impact — 37% receive waiver, affects revenue model", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "State Funding Volatility — declining appropriations per student", "source": "PESTLE Economic (Phase 1)"},
+        ],
+    },
+    "Sustainability & Climate Institute": {
+        "supporting": [
+            {"text": "Sustainability & Environmental Leadership — Durango setting + strong programs", "source": "SWOT Opportunity (Phase 2)"},
+            {"text": "Environmental Conservation & Mgmt (133 enrolled) + Environmental Science (87)", "source": "Gray Associates (Phase 1)"},
+            {"text": "Position as leader in sustainability education", "source": "PESTLE Environmental (Phase 1)"},
+            {"text": "Climate resilience research opportunities identified", "source": "PESTLE Environmental (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Climate change impacts on Durango/mountain region — wildfire risk", "source": "PESTLE Environmental (Phase 1)"},
+            {"text": "Environment & Sustainability dept in Concern quadrant (-8% change)", "source": "BCG Matrix (Phase 1)"},
+        ],
+    },
+    "Experiential Learning Model": {
+        "supporting": [
+            {"text": "Outdoor Recreation & Location Differentiator — online competitors cannot replicate", "source": "SWOT Strength (Phase 2)"},
+            {"text": "FLC experiential differentiation rated Strong and Stable", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Adventure Education uniquely positioned (High Mission Alignment)", "source": "Gray Associates (Phase 1)"},
+            {"text": "Technology-enhanced experiential learning opportunity", "source": "PESTLE Technological (Phase 1)"},
+        ],
+        "risks": [
+            {"text": "Adventure Education in Concern quadrant (-10% change)", "source": "BCG Matrix (Phase 1)"},
+            {"text": "Outdoor recreation economy dependency on climate conditions", "source": "PESTLE Environmental (Phase 1)"},
+        ],
+    },
+    "Program Portfolio Restructuring": {
+        "supporting": [
+            {"text": "Multiple Concern-Quadrant Programs identified for action", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "TRANSFORM: English and Math — weak market but strong economics, innovate delivery", "source": "Gray Associates (Phase 1)"},
+            {"text": "High-SCH Cash Cow Programs — restructuring can preserve SCH generation", "source": "SWOT Strength (Phase 2)"},
+        ],
+        "risks": [
+            {"text": "9 Concern-quadrant departments with steep declines (up to -26%)", "source": "BCG Matrix (Phase 1)"},
+            {"text": "EVALUATE/SUNSET: Political Science, Philosophy, Art & Design need strategic review", "source": "Gray Associates (Phase 1)"},
+            {"text": "Declining Undergraduate Enrollment — -13.6% limits restructuring options", "source": "SWOT Weakness (Phase 2)"},
+        ],
+    },
+}
+
 # Three Strategic Scenarios
 SCENARIOS = {
     "Optimistic": {

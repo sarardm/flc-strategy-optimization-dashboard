@@ -39,7 +39,7 @@ from data import (
     GRAY_ASSOCIATES_DATA, GA_RECOMMENDATION_COLORS, GA_INSIGHTS,
     STRATEGIC_INITIATIVES, MILESTONES, KPIS, RESOURCE_ALLOCATION,
     DATA_SOURCES, FRAMEWORK_DESCRIPTIONS,
-    SWOT_DATA, ZONE_TO_WIN_DATA, SCENARIOS,
+    SWOT_DATA, ZONE_TO_WIN_DATA, ZONE_CROSS_REFERENCES, SCENARIOS,
     ROADMAP_MILESTONES, ROADMAP_KPIS, RISK_MITIGATION,
 )
 from doc_generator import generate_swot_pptx
@@ -875,6 +875,36 @@ def build_zone_to_win_tab():
                     "color": inv_colors.get(p["investment"], CLR_NEUTRAL), "fontWeight": "700", "backgroundColor": row_bg,
                 }),
             ]))
+            # Cross-reference commentary row
+            xref = ZONE_CROSS_REFERENCES.get(p["name"])
+            if xref:
+                xref_children = []
+                if xref.get("supporting"):
+                    items = [f'"{f["text"]}" ({f["source"]})' for f in xref["supporting"]]
+                    xref_children.append(html.Div([
+                        html.Span("\u2713 Supporting: ", style={
+                            "color": "#276749", "fontWeight": "700", "fontSize": "10px",
+                        }),
+                        html.Span("; ".join(items), style={
+                            "color": "#4a6070", "fontSize": "10px",
+                        }),
+                    ], style={"marginBottom": "3px"}))
+                if xref.get("risks"):
+                    items = [f'"{f["text"]}" ({f["source"]})' for f in xref["risks"]]
+                    xref_children.append(html.Div([
+                        html.Span("\u26A0 Risks: ", style={
+                            "color": "#c53030", "fontWeight": "700", "fontSize": "10px",
+                        }),
+                        html.Span("; ".join(items), style={
+                            "color": "#4a6070", "fontSize": "10px",
+                        }),
+                    ]))
+                program_rows.append(html.Tr([
+                    html.Td(xref_children, colSpan=3, style={
+                        "padding": "6px 10px 10px 20px", "backgroundColor": "#f8fafc",
+                        "borderBottom": f"1px solid {FLC_BLUE_PALE}",
+                    }),
+                ]))
 
         zone_cards.append(html.Div([
             html.Div([
