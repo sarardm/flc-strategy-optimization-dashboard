@@ -1,0 +1,158 @@
+/* ==========================================================================
+   FLC Portfolio Optimization Dashboard — Blue Theme
+   ========================================================================== */
+
+:root {
+    --flc-navy: #003057;
+    --flc-blue: #0066b3;
+    --flc-blue-light: #2a8fd4;
+    --flc-blue-pale: #d6e8f7;
+    --flc-blue-wash: #eaf2fa;
+    --flc-bg: #f5f8fb;
+    --flc-white: #ffffff;
+    --flc-text: #003057;
+    --flc-text-light: #4a6070;
+    --flc-border: #c8daea;
+}
+
+body {
+    margin: 0; padding: 0;
+    background-color: var(--flc-bg) !important;
+    color: var(--flc-text);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ===== GLOBAL HEADER (gradient + mountain silhouettes) ===== */
+.flc-header {
+    position: relative;
+    background: linear-gradient(165deg, #0077c2 0%, #003057 55%, #001a33 100%);
+    overflow: hidden;
+}
+.flc-header::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 80' preserveAspectRatio='none'%3E%3Cpath d='M0,40 L40,25 L80,35 L120,15 L160,30 L200,10 L240,28 L280,5 L320,22 L360,12 L400,32 L440,8 L480,26 L520,18 L560,38 L600,14 L640,28 L680,6 L720,20 L760,35 L800,12 L840,25 L880,8 L920,30 L960,15 L1000,28 L1040,5 L1080,22 L1120,35 L1160,10 L1200,28 L1240,18 L1280,32 L1320,8 L1360,25 L1400,15 L1440,30 L1440,80 L0,80 Z' fill='rgba(0,48,87,0.5)'/%3E%3C/svg%3E") no-repeat bottom center;
+    background-size: 100% 80px;
+    z-index: 1;
+}
+.flc-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 50px;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 50' preserveAspectRatio='none'%3E%3Cpath d='M0,25 L30,18 L60,28 L100,8 L140,22 L180,12 L220,30 L260,5 L300,20 L340,28 L380,10 L420,24 L460,15 L500,32 L540,8 L580,22 L620,28 L660,12 L700,20 L740,30 L780,5 L820,18 L860,28 L900,10 L940,22 L980,30 L1020,8 L1060,20 L1100,28 L1140,12 L1180,24 L1220,15 L1260,30 L1300,8 L1340,22 L1380,28 L1420,15 L1440,20 L1440,50 L0,50 Z' fill='rgba(0,30,60,0.6)'/%3E%3C/svg%3E") no-repeat bottom center;
+    background-size: 100% 50px;
+    z-index: 2;
+}
+
+/* ===== GLOBAL FOOTER (mountain silhouettes) ===== */
+.flc-footer {
+    position: relative;
+    overflow: hidden;
+}
+.flc-footer::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 40px;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 40' preserveAspectRatio='none'%3E%3Cpath d='M0,35 L60,20 L120,30 L180,10 L240,25 L300,5 L360,22 L420,12 L480,28 L540,8 L600,20 L660,30 L720,10 L780,25 L840,5 L900,22 L960,12 L1020,28 L1080,8 L1140,20 L1200,30 L1260,10 L1320,25 L1380,15 L1440,20 L1440,0 L0,0 Z' fill='%23e0ecf5'/%3E%3C/svg%3E") no-repeat top center;
+    background-size: 100% 40px;
+    z-index: 1;
+}
+.flc-footer::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 25px;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 25' preserveAspectRatio='none'%3E%3Cpath d='M0,20 L80,8 L160,18 L240,5 L320,15 L400,2 L480,12 L560,20 L640,6 L720,16 L800,3 L880,14 L960,8 L1040,18 L1120,5 L1200,15 L1280,2 L1360,12 L1440,8 L1440,0 L0,0 Z' fill='%23cde0f0'/%3E%3C/svg%3E") no-repeat top center;
+    background-size: 100% 25px;
+    z-index: 2;
+}
+
+/* ===== Tab Styling ===== */
+.custom-tabs-container .tab {
+    border: none !important;
+    background-color: var(--flc-white) !important;
+    color: var(--flc-text-light) !important;
+    font-weight: 600 !important;
+    padding: 12px 18px !important;
+    font-size: 13px !important;
+    letter-spacing: 0.2px;
+    transition: all 0.2s ease;
+    border-bottom: 3px solid transparent !important;
+}
+.custom-tabs-container .tab:hover {
+    color: var(--flc-blue) !important;
+    background-color: var(--flc-blue-wash) !important;
+}
+.custom-tabs-container .tab--selected {
+    color: var(--flc-navy) !important;
+    border-bottom: 3px solid var(--flc-blue) !important;
+    background-color: var(--flc-white) !important;
+    font-weight: 700 !important;
+}
+
+/* ===== DataTable ===== */
+.dash-spreadsheet-container .dash-spreadsheet-inner th {
+    background-color: var(--flc-white) !important;
+    color: var(--flc-navy) !important;
+    font-weight: 700 !important;
+    border-bottom: 2px solid var(--flc-blue) !important;
+    border-top: none !important;
+    text-transform: uppercase;
+    font-size: 11px !important;
+    letter-spacing: 0.5px;
+    padding: 10px 8px !important;
+}
+.dash-spreadsheet-container .dash-spreadsheet-inner td {
+    border-color: var(--flc-blue-pale) !important;
+    color: var(--flc-navy) !important;
+}
+.dash-spreadsheet-container .dash-spreadsheet-inner input {
+    border: 1px solid var(--flc-border) !important;
+    border-radius: 4px !important;
+    color: var(--flc-navy) !important;
+}
+.dash-spreadsheet-container .dash-spreadsheet-inner input:focus {
+    border-color: var(--flc-blue) !important;
+    box-shadow: 0 0 0 2px rgba(0,102,179,0.15) !important;
+}
+.dash-spreadsheet-container .previous-next-container button {
+    color: var(--flc-blue) !important;
+    font-weight: 600 !important;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--flc-blue-wash); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--flc-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--flc-blue-light); }
+
+/* ===== Plotly modebar ===== */
+.js-plotly-plot .plotly .modebar { opacity: 0.3; }
+.js-plotly-plot .plotly .modebar:hover { opacity: 0.8; }
+
+/* ===== Button hover ===== */
+button:not(:disabled):hover { filter: brightness(1.1); }
+
+/* ===== Subtle topographic background ===== */
+.flc-topo-bg { position: relative; }
+.flc-topo-bg::after {
+    content: '';
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 200px;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200' viewBox='0 0 600 200'%3E%3Cpath d='M0,100 Q50,60 100,80 Q150,100 200,70 Q250,40 300,60 Q350,80 400,50 Q450,20 500,40 Q550,60 600,30' fill='none' stroke='%230066b3' stroke-width='1.5'/%3E%3Cpath d='M0,130 Q60,90 120,110 Q180,130 240,100 Q300,70 360,90 Q420,110 480,80 Q540,50 600,70' fill='none' stroke='%230066b3' stroke-width='1.5'/%3E%3Cpath d='M0,160 Q70,120 140,140 Q210,160 280,130 Q350,100 420,120 Q490,140 560,110 L600,100' fill='none' stroke='%230066b3' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-position: bottom center;
+    background-size: 600px 200px;
+}

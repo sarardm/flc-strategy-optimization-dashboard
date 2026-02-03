@@ -42,6 +42,7 @@ from data import (
     SWOT_DATA, ZONE_TO_WIN_DATA, SCENARIOS,
     ROADMAP_MILESTONES, ROADMAP_KPIS, RISK_MITIGATION,
 )
+from doc_generator import generate_swot_pptx
 
 # ============================================================================
 # APP SETUP
@@ -60,34 +61,114 @@ auth = dash_auth.BasicAuth(
     VALID_USERNAME_PASSWORD_PAIRS
 )
 
-# FLC brand colors
+# FLC brand colors (matched to official FLC templates)
 FLC_NAVY = "#003057"
 FLC_BLUE = "#0066b3"
+FLC_BLUE_LIGHT = "#2a8fd4"
 FLC_GOLD = "#c8a415"
-FLC_LIGHT = "#f0f4f8"
+FLC_LIGHT = "#f5f8fb"
+FLC_BLUE_PALE = "#d6e8f7"
+FLC_BLUE_WASH = "#eaf2fa"
 BG_WHITE = "#ffffff"
+FLC_BORDER = "#c8daea"
 
 # Shared style constants
 CARD_STYLE = {
     "backgroundColor": BG_WHITE,
-    "borderRadius": "8px",
-    "padding": "20px",
+    "borderRadius": "10px",
+    "padding": "22px",
     "marginBottom": "16px",
-    "boxShadow": "0 2px 4px rgba(0,0,0,0.08)",
-    "border": "1px solid #e2e8f0",
+    "boxShadow": "0 1px 3px rgba(0,48,87,0.06), 0 1px 2px rgba(0,48,87,0.04)",
+    "border": f"1px solid {FLC_BORDER}",
 }
 
 SECTION_TITLE = {
-    "color": FLC_NAVY,
+    "color": FLC_BLUE,
     "fontSize": "20px",
-    "fontWeight": "bold",
+    "fontWeight": "700",
     "marginBottom": "12px",
-    "borderBottom": f"3px solid {FLC_GOLD}",
+    "borderBottom": f"2px solid {FLC_BLUE}",
     "paddingBottom": "8px",
+    "letterSpacing": "0.3px",
 }
 
-TAB_STYLE = {"fontWeight": "600"}
-TAB_SELECTED = {"fontWeight": "700", "borderTop": f"3px solid {FLC_GOLD}"}
+TAB_STYLE = {
+    "fontWeight": "600",
+    "fontSize": "13px",
+    "padding": "12px 18px",
+    "border": "none",
+    "borderBottom": "3px solid transparent",
+    "color": "#4a6070",
+}
+TAB_SELECTED = {
+    "fontWeight": "700",
+    "fontSize": "13px",
+    "padding": "12px 18px",
+    "borderTop": "none",
+    "borderBottom": f"3px solid {FLC_BLUE}",
+    "color": FLC_NAVY,
+}
+
+# FLC-branded Plotly chart template applied to ALL visualizations
+FLC_COLORWAY = [FLC_NAVY, FLC_BLUE, FLC_BLUE_LIGHT, "#5ba3d9", "#8cc0e8", "#b8d8f0"]
+FLC_CHART_TEMPLATE = go.layout.Template(
+    layout=go.Layout(
+        font=dict(family="Segoe UI, Tahoma, Geneva, Verdana, sans-serif", color=FLC_NAVY),
+        title=dict(font=dict(color=FLC_NAVY, size=16, family="Segoe UI, sans-serif"), x=0, xanchor="left"),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        colorway=FLC_COLORWAY,
+        xaxis=dict(gridcolor=FLC_BLUE_PALE, linecolor=FLC_BORDER, zerolinecolor=FLC_BORDER,
+                   title_font=dict(color=FLC_NAVY, size=12), tickfont=dict(color="#4a6070", size=11)),
+        yaxis=dict(gridcolor=FLC_BLUE_PALE, linecolor=FLC_BORDER, zerolinecolor=FLC_BORDER,
+                   title_font=dict(color=FLC_NAVY, size=12), tickfont=dict(color="#4a6070", size=11)),
+        legend=dict(font=dict(size=11, color=FLC_NAVY)),
+        hoverlabel=dict(bgcolor=FLC_NAVY, font_size=12, font_color="white"),
+    )
+)
+
+# Semantic colors (muted, professional versions for indicators)
+CLR_HIGH = "#c53030"       # deep red
+CLR_MEDIUM = "#d69e2e"     # warm amber
+CLR_LOW = "#276749"        # forest green
+CLR_POSITIVE = "#2b6cb0"   # positive blue
+CLR_NEUTRAL = "#718096"    # neutral gray-blue
+
+# Phase accent colors (blue family)
+PHASE_COLORS = [FLC_BLUE_LIGHT, FLC_BLUE, FLC_NAVY]
+
+# Status colors (blue-toned)
+STATUS_COLORS = {
+    "Complete": "#2b6cb0",     # blue
+    "In Progress": FLC_BLUE_LIGHT,
+    "Not Started": "#a0aec0",  # gray-blue
+    "Upcoming": "#4299e1",     # lighter blue
+}
+
+# Badge helper
+def _badge(text, bg_color):
+    return html.Span(text, style={
+        "backgroundColor": bg_color, "color": "white", "padding": "2px 9px",
+        "borderRadius": "10px", "fontSize": "10px", "fontWeight": "600",
+        "marginLeft": "8px", "whiteSpace": "nowrap",
+    })
+
+# Shared DataTable style dict (Slide 7 style: light blue banding, thin borders)
+TABLE_HEADER_STYLE = {
+    "backgroundColor": BG_WHITE, "color": FLC_NAVY, "fontWeight": "700",
+    "fontSize": "11px", "borderBottom": f"2px solid {FLC_BLUE}",
+    "textTransform": "uppercase", "letterSpacing": "0.5px",
+    "padding": "10px 8px",
+}
+TABLE_CELL_STYLE = {
+    "textAlign": "center", "padding": "8px", "fontSize": "12px",
+    "color": FLC_NAVY, "border": f"1px solid {FLC_BLUE_PALE}",
+    "fontFamily": "Segoe UI, Tahoma, sans-serif",
+}
+TABLE_ROW_BANDING = [
+    {"if": {"row_index": "odd"}, "backgroundColor": FLC_BLUE_WASH},
+    {"if": {"row_index": "even"}, "backgroundColor": BG_WHITE},
+]
 
 # ============================================================================
 # HELPERS
@@ -97,16 +178,15 @@ def data_source_badge(framework_name):
     """Render a data-source attribution badge."""
     info = DATA_SOURCES.get(framework_name, {})
     source = info.get("source", "Unknown")
-    color = info.get("badge_color", "#999")
     return html.Div([
-        html.Span("DATA SOURCE: ", style={"fontWeight": "bold", "fontSize": "11px"}),
+        html.Span("DATA SOURCE: ", style={"fontWeight": "bold", "fontSize": "11px", "color": FLC_NAVY}),
         html.Span(source, style={
-            "backgroundColor": color, "color": "white", "padding": "2px 8px",
+            "backgroundColor": FLC_BLUE, "color": "white", "padding": "2px 8px",
             "borderRadius": "10px", "fontSize": "11px", "fontWeight": "600",
         }),
         html.Span(
             f"  ({', '.join(info.get('files', []))})",
-            style={"fontSize": "11px", "color": "#666", "marginLeft": "8px"},
+            style={"fontSize": "11px", "color": "#6b8299", "marginLeft": "8px"},
         ),
     ], style={"marginBottom": "12px"})
 
@@ -116,9 +196,9 @@ def framework_description_block(key):
     text = FRAMEWORK_DESCRIPTIONS.get(key, "")
     return html.Div([
         html.P(text, style={
-            "fontSize": "13px", "color": "#444", "lineHeight": "1.6",
-            "backgroundColor": "#f8fafc", "padding": "12px 16px",
-            "borderLeft": f"4px solid {FLC_GOLD}", "borderRadius": "4px",
+            "fontSize": "13px", "color": "#3a5068", "lineHeight": "1.7",
+            "backgroundColor": FLC_BLUE_WASH, "padding": "14px 18px",
+            "borderLeft": f"4px solid {FLC_BLUE}", "borderRadius": "4px",
             "marginBottom": "16px",
         }),
     ])
@@ -139,11 +219,13 @@ def download_buttons(framework_label):
     pptx_exists = os.path.exists(pptx_path)
 
     btn_style = {
-        "backgroundColor": FLC_NAVY, "color": "white", "border": "none",
-        "padding": "8px 16px", "borderRadius": "6px", "cursor": "pointer",
+        "backgroundColor": FLC_BLUE, "color": "white", "border": "none",
+        "padding": "9px 18px", "borderRadius": "6px", "cursor": "pointer",
         "fontSize": "12px", "fontWeight": "600", "marginRight": "8px",
+        "transition": "background-color 0.2s ease",
+        "letterSpacing": "0.2px",
     }
-    btn_disabled_style = {**btn_style, "backgroundColor": "#ccc", "cursor": "not-allowed"}
+    btn_disabled_style = {**btn_style, "backgroundColor": FLC_BORDER, "cursor": "not-allowed", "color": "#8a9baa"}
 
     buttons = []
     if docx_exists:
@@ -174,7 +256,7 @@ def download_buttons(framework_label):
 def source_annotation(text):
     """Small italic source citation below a chart or table."""
     return html.Div(text, style={
-        "fontSize": "10px", "color": "#999", "fontStyle": "italic",
+        "fontSize": "10px", "color": "#8a9bb0", "fontStyle": "italic",
         "textAlign": "right", "marginTop": "-8px", "marginBottom": "8px",
     })
 
@@ -193,52 +275,53 @@ def build_summary_page():
         ("Graduate Students", "160", "Fall 2025", "+5.3% YoY"),
         ("Programs Analyzed", "23", "All Frameworks", "4 Frameworks"),
     ]
-    for title, value, sub, trend in quick_stats:
+    kpi_accents = [FLC_NAVY, FLC_BLUE, FLC_BLUE_LIGHT, "#5ba3d9"]
+    for i, (title, value, sub, trend) in enumerate(quick_stats):
+        accent = kpi_accents[i]
         kpi_cards.append(html.Div([
-            html.Div(title, style={"fontSize": "12px", "color": "#666", "textTransform": "uppercase"}),
-            html.Div(value, style={"fontSize": "32px", "fontWeight": "bold", "color": FLC_NAVY}),
-            html.Div(sub, style={"fontSize": "12px", "color": "#888"}),
-            html.Div(trend, style={"fontSize": "12px", "color": FLC_BLUE, "fontWeight": "600"}),
-        ], style={**CARD_STYLE, "textAlign": "center", "flex": "1", "minWidth": "180px"}))
+            html.Div(title, style={"fontSize": "11px", "color": FLC_BLUE, "textTransform": "uppercase", "fontWeight": "700", "letterSpacing": "1px"}),
+            html.Div(value, style={"fontSize": "36px", "fontWeight": "800", "color": FLC_NAVY, "marginTop": "6px", "lineHeight": "1"}),
+            html.Div(sub, style={"fontSize": "12px", "color": "#6b8299", "marginTop": "6px"}),
+            html.Div(trend, style={"fontSize": "12px", "color": accent, "fontWeight": "700", "marginTop": "4px"}),
+        ], style={**CARD_STYLE, "textAlign": "center", "flex": "1", "minWidth": "180px",
+                  "borderTop": f"4px solid {accent}", "padding": "24px 16px"}))
 
     # Enrollment trend mini chart
     fig_enroll = go.Figure()
     fig_enroll.add_trace(go.Scatter(
         x=ENROLLMENT_HISTORY["Year"], y=ENROLLMENT_HISTORY["Total_Headcount"],
-        mode="lines+markers", line=dict(color=FLC_NAVY, width=3),
-        marker=dict(size=8), name="Total Headcount",
+        mode="lines+markers", line=dict(color=FLC_BLUE, width=3),
+        marker=dict(size=8, color=FLC_NAVY, line=dict(width=2, color=FLC_BLUE)),
+        name="Total Headcount",
+        fill="tozeroy", fillcolor="rgba(0,102,179,0.07)",
     ))
     fig_enroll.update_layout(
-        title="10-Year Enrollment Trend", height=300,
-        margin=dict(l=40, r=20, t=40, b=30),
-        template="plotly_white", showlegend=False,
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="10-Year Enrollment Trend"),
+        height=300, margin=dict(l=40, r=20, t=50, b=30), showlegend=False,
     )
 
-    # 3-phase overview cards
+    # 3-phase overview cards (blue family accents)
     phase_cards = []
     phases = [
-        ("Phase 1: Environmental Scanning", "#2ecc71",
+        ("Phase 1: Environmental Scanning", FLC_BLUE_LIGHT,
          "PESTLE, Porter's Five Forces, Gray Associates Portfolio Analysis, and BCG Growth-Share Matrix provide comprehensive external and internal scanning.",
          "4 frameworks completed"),
-        ("Phase 2: Strategic Synthesis", "#3498db",
+        ("Phase 2: Strategic Synthesis", FLC_BLUE,
          "SWOT Analysis synthesizes all Phase 1 findings into actionable Strengths, Weaknesses, Opportunities, and Threats with source attribution.",
          "Cross-framework synthesis"),
-        ("Phase 3: Strategic Direction", "#8e44ad",
+        ("Phase 3: Strategic Direction", FLC_NAVY,
          "Zone to Win framework with 3 strategic scenarios and a detailed Strategic Roadmap with KPIs, milestones, and risk mitigation.",
          "Implementation planning"),
     ]
-    for name, color, desc, badge in phases:
+    for name, color, desc, badge_text in phases:
         phase_cards.append(html.Div([
             html.Div([
                 html.Strong(name, style={"fontSize": "15px", "color": FLC_NAVY}),
-                html.Span(f"  {badge}", style={
-                    "backgroundColor": color, "color": "white",
-                    "padding": "2px 8px", "borderRadius": "10px",
-                    "fontSize": "10px", "marginLeft": "8px",
-                }),
+                _badge(badge_text, color),
             ]),
-            html.P(desc, style={"fontSize": "13px", "color": "#444", "marginTop": "6px", "marginBottom": "0"}),
-        ], style={**CARD_STYLE, "padding": "14px", "borderLeft": f"4px solid {color}"}))
+            html.P(desc, style={"fontSize": "13px", "color": "#4a6070", "marginTop": "6px", "marginBottom": "0", "lineHeight": "1.6"}),
+        ], style={**CARD_STYLE, "padding": "16px", "borderLeft": f"4px solid {color}"}))
 
     # Framework highlight summaries
     framework_summaries = []
@@ -252,33 +335,31 @@ def build_summary_page():
         ("Gray Analysis", "Internet Methodology + FLC Data",
          "7 programs recommended to GROW, 7 to SUSTAIN, 2 to TRANSFORM, 4 to EVALUATE, 2 for SUNSET REVIEW."),
     ]
-    for name, source, summary in fw_data:
-        badge_color = "#2ecc71" if "Internal" in source else "#3498db"
+    fw_badge_colors = [FLC_NAVY, FLC_NAVY, FLC_BLUE, FLC_BLUE]
+    for i, (name, source, summary) in enumerate(fw_data):
         framework_summaries.append(html.Div([
             html.Div([
                 html.Strong(name, style={"fontSize": "14px", "color": FLC_NAVY}),
-                html.Span(f"  {source}", style={
-                    "backgroundColor": badge_color, "color": "white",
-                    "padding": "1px 6px", "borderRadius": "8px",
-                    "fontSize": "10px", "marginLeft": "8px",
-                }),
+                _badge(source, fw_badge_colors[i]),
             ]),
-            html.P(summary, style={"fontSize": "13px", "color": "#444", "marginTop": "6px", "marginBottom": "0"}),
-        ], style={**CARD_STYLE, "padding": "14px"}))
+            html.P(summary, style={"fontSize": "13px", "color": "#4a6070", "marginTop": "6px", "marginBottom": "0", "lineHeight": "1.6"}),
+        ], style={**CARD_STYLE, "padding": "16px"}))
 
     # Retention trend mini chart
     fig_retention = go.Figure()
     fig_retention.add_trace(go.Scatter(
         x=RETENTION_HISTORY["Year"], y=RETENTION_HISTORY["Retention_Rate"],
-        mode="lines+markers", line=dict(color=FLC_GOLD, width=3),
-        marker=dict(size=8), name="Retention Rate",
+        mode="lines+markers", line=dict(color=FLC_NAVY, width=3),
+        marker=dict(size=8, color=FLC_BLUE, line=dict(width=2, color=FLC_NAVY)),
+        name="Retention Rate",
+        fill="tozeroy", fillcolor="rgba(0,48,87,0.05)",
     ))
-    fig_retention.add_hline(y=73, line_dash="dash", line_color="#e74c3c", line_width=1,
+    fig_retention.add_hline(y=73, line_dash="dash", line_color=CLR_HIGH, line_width=1,
                             annotation_text="National Avg (73%)", annotation_position="right")
     fig_retention.update_layout(
-        title="FTFT Retention Rate Trend", height=300,
-        margin=dict(l=40, r=20, t=40, b=30),
-        template="plotly_white", showlegend=False,
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="FTFT Retention Rate Trend"),
+        height=300, margin=dict(l=40, r=20, t=50, b=30), showlegend=False,
         yaxis_range=[50, 80],
     )
 
@@ -286,11 +367,11 @@ def build_summary_page():
         html.H2("Executive Summary", style={**SECTION_TITLE, "fontSize": "24px"}),
         html.P(
             f"Fort Lewis College Portfolio Optimization Project | Updated {datetime.now().strftime('%B %d, %Y')}",
-            style={"color": "#666", "marginBottom": "16px"},
+            style={"color": "#6b8299", "marginBottom": "16px", "fontSize": "13px"},
         ),
 
         # KPI row
-        html.Div(kpi_cards, style={"display": "flex", "gap": "12px", "flexWrap": "wrap", "marginBottom": "16px"}),
+        html.Div(kpi_cards, style={"display": "flex", "gap": "14px", "flexWrap": "wrap", "marginBottom": "20px"}),
 
         # Two-column: enrollment + retention trends
         html.Div([
@@ -323,60 +404,60 @@ def build_pestle_tab():
         r=scores + [scores[0]],
         theta=categories + [categories[0]],
         fill="toself",
-        fillcolor="rgba(0,48,87,0.15)",
-        line=dict(color=FLC_NAVY, width=2),
-        marker=dict(size=8, color=FLC_GOLD),
+        fillcolor="rgba(0,102,179,0.12)",
+        line=dict(color=FLC_BLUE, width=2),
+        marker=dict(size=8, color=FLC_NAVY),
     ))
     fig_radar.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 5], tickvals=[1, 2, 3, 4, 5])),
-        title="PESTLE Impact Assessment (1-5 scale)",
+        template=FLC_CHART_TEMPLATE,
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 5], tickvals=[1, 2, 3, 4, 5],
+                            gridcolor=FLC_BLUE_PALE, linecolor=FLC_BORDER),
+            angularaxis=dict(gridcolor=FLC_BLUE_PALE, linecolor=FLC_BORDER),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        title=dict(text="PESTLE Impact Assessment (1-5 scale)"),
         height=400, margin=dict(l=60, r=60, t=50, b=30),
     )
 
-    impact_colors = {"High": "#e74c3c", "Medium": "#f39c12", "Low": "#2ecc71"}
+    impact_colors = {"High": CLR_HIGH, "Medium": CLR_MEDIUM, "Low": CLR_LOW}
+    # Use a blue gradient for the bars, with text showing impact level
+    bar_blues = [FLC_NAVY, FLC_BLUE, FLC_BLUE_LIGHT, "#5ba3d9", "#8cc0e8", "#b8d8f0"]
     fig_bar = go.Figure(data=[go.Bar(
         x=categories, y=scores,
-        marker_color=[impact_colors.get(PESTLE_DATA[c]["impact"], "#999") for c in categories],
+        marker_color=bar_blues[:len(categories)],
         text=[PESTLE_DATA[c]["impact"] for c in categories],
-        textposition="outside",
+        textposition="outside", textfont=dict(color=FLC_NAVY, size=11),
     )])
     fig_bar.update_layout(
-        title="Impact Level by PESTLE Category",
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="Impact Level by PESTLE Category"),
         yaxis_title="Impact Score", yaxis_range=[0, 6],
         height=350, margin=dict(l=40, r=20, t=50, b=30),
-        template="plotly_white",
     )
 
     detail_cards = []
+    trend_colors = {"Negative": CLR_HIGH, "Mixed": CLR_MEDIUM,
+                    "Stable": FLC_BLUE, "Opportunity": CLR_POSITIVE}
     for cat in categories:
         d = PESTLE_DATA[cat]
-        trend_color = {"Negative": "#e74c3c", "Mixed": "#f39c12",
-                       "Stable": "#3498db", "Opportunity": "#2ecc71"}.get(d["trend"], "#999")
         detail_cards.append(html.Div([
             html.Div([
                 html.Strong(cat, style={"fontSize": "16px", "color": FLC_NAVY}),
-                html.Span(f"  Impact: {d['impact']}", style={
-                    "backgroundColor": impact_colors.get(d["impact"], "#999"),
-                    "color": "white", "padding": "2px 8px", "borderRadius": "10px",
-                    "fontSize": "11px", "marginLeft": "8px",
-                }),
-                html.Span(f"  Trend: {d['trend']}", style={
-                    "backgroundColor": trend_color,
-                    "color": "white", "padding": "2px 8px", "borderRadius": "10px",
-                    "fontSize": "11px", "marginLeft": "4px",
-                }),
+                _badge(f"Impact: {d['impact']}", impact_colors.get(d["impact"], CLR_NEUTRAL)),
+                _badge(f"Trend: {d['trend']}", trend_colors.get(d["trend"], CLR_NEUTRAL)),
             ]),
             html.Div([
-                html.Strong("Key Factors:", style={"fontSize": "12px"}),
-                html.Ul([html.Li(f, style={"fontSize": "12px"}) for f in d["factors"]],
+                html.Strong("Key Factors:", style={"fontSize": "12px", "color": FLC_NAVY}),
+                html.Ul([html.Li(f, style={"fontSize": "12px", "color": "#4a6070"}) for f in d["factors"]],
                         style={"marginTop": "4px", "marginBottom": "4px"}),
             ], style={"marginTop": "8px"}),
             html.Div([
-                html.Strong("Opportunities:", style={"fontSize": "12px", "color": "#2ecc71"}),
-                html.Ul([html.Li(o, style={"fontSize": "12px"}) for o in d["opportunities"]],
+                html.Strong("Opportunities:", style={"fontSize": "12px", "color": FLC_BLUE}),
+                html.Ul([html.Li(o, style={"fontSize": "12px", "color": "#4a6070"}) for o in d["opportunities"]],
                         style={"marginTop": "4px"}),
             ]),
-        ], style={**CARD_STYLE, "padding": "14px"}))
+        ], style={**CARD_STYLE, "padding": "16px", "borderLeft": f"3px solid {FLC_BLUE}"}))
 
     return html.Div([
         html.H2("PESTLE Analysis", style=SECTION_TITLE),
@@ -407,68 +488,77 @@ def build_porters_tab():
         r=scores + [scores[0]],
         theta=forces + [forces[0]],
         fill="toself",
-        fillcolor="rgba(0,102,179,0.15)",
-        line=dict(color=FLC_BLUE, width=2),
-        marker=dict(size=8, color=FLC_GOLD),
+        fillcolor="rgba(0,48,87,0.10)",
+        line=dict(color=FLC_NAVY, width=2),
+        marker=dict(size=8, color=FLC_BLUE),
     ))
     fig_radar.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 5], tickvals=[1, 2, 3, 4, 5],
-                                    ticktext=["1-Low", "2", "3-Med", "4", "5-High"])),
-        title="Porter's Five Forces - Competitive Intensity",
+        template=FLC_CHART_TEMPLATE,
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 5], tickvals=[1, 2, 3, 4, 5],
+                            ticktext=["1-Low", "2", "3-Med", "4", "5-High"],
+                            gridcolor=FLC_BLUE_PALE, linecolor=FLC_BORDER),
+            angularaxis=dict(gridcolor=FLC_BLUE_PALE, linecolor=FLC_BORDER),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        title=dict(text="Porter's Five Forces - Competitive Intensity"),
         height=420, margin=dict(l=80, r=80, t=50, b=30),
     )
 
+    porter_blues = [FLC_NAVY, FLC_BLUE, FLC_BLUE_LIGHT, "#5ba3d9", "#8cc0e8"]
     fig_bar = go.Figure(data=[go.Bar(
         y=forces, x=scores, orientation="h",
-        marker_color=[PORTERS_DATA[f]["color"] for f in forces],
+        marker_color=porter_blues[:len(forces)],
         text=[PORTERS_DATA[f]["rating"] for f in forces],
-        textposition="outside",
+        textposition="outside", textfont=dict(color=FLC_NAVY, size=11),
     )])
     fig_bar.update_layout(
-        title="Force Intensity Ratings",
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="Force Intensity Ratings"),
         xaxis_title="Intensity (1=Low, 5=High)", xaxis_range=[0, 5.5],
         height=350, margin=dict(l=180, r=40, t=50, b=30),
-        template="plotly_white",
     )
 
+    trend_colors_map = {"Increasing": CLR_HIGH, "Decreasing": CLR_LOW,
+                        "Stable": FLC_BLUE, "Improving": CLR_POSITIVE}
     force_cards = []
-    for force in forces:
+    for fi, force in enumerate(forces):
         d = PORTERS_DATA[force]
+        accent = porter_blues[fi % len(porter_blues)]
         ind_rows = []
-        for ind in d["indicators"]:
+        for ri, ind in enumerate(d["indicators"]):
             trend_icon = {"Increasing": "^", "Decreasing": "v", "Stable": "-", "Improving": "^"}.get(ind["trend"], "?")
-            trend_color = {"Increasing": "#e74c3c", "Decreasing": "#2ecc71",
-                           "Stable": "#3498db", "Improving": "#2ecc71"}.get(ind["trend"], "#999")
+            row_bg = FLC_BLUE_WASH if ri % 2 == 0 else BG_WHITE
             ind_rows.append(html.Tr([
-                html.Td(ind["name"], style={"fontSize": "12px", "padding": "4px 8px"}),
-                html.Td(ind["value"], style={"fontSize": "12px", "padding": "4px 8px", "fontWeight": "600"}),
+                html.Td(ind["name"], style={"fontSize": "12px", "padding": "6px 10px", "color": FLC_NAVY, "backgroundColor": row_bg}),
+                html.Td(ind["value"], style={"fontSize": "12px", "padding": "6px 10px", "fontWeight": "600", "color": FLC_NAVY, "backgroundColor": row_bg}),
                 html.Td(f"{trend_icon} {ind['trend']}", style={
-                    "fontSize": "12px", "padding": "4px 8px", "color": trend_color, "fontWeight": "600",
+                    "fontSize": "12px", "padding": "6px 10px", "color": trend_colors_map.get(ind["trend"], CLR_NEUTRAL),
+                    "fontWeight": "600", "backgroundColor": row_bg,
                 }),
             ]))
         force_cards.append(html.Div([
             html.Div([
                 html.Strong(force, style={"fontSize": "15px", "color": FLC_NAVY}),
-                html.Span(f"  {d['rating']}", style={
-                    "backgroundColor": d["color"], "color": "white",
-                    "padding": "2px 10px", "borderRadius": "10px",
-                    "fontSize": "12px", "marginLeft": "8px",
-                }),
+                _badge(d["rating"], accent),
             ]),
-            html.P(d["description"], style={"fontSize": "12px", "color": "#555", "margin": "6px 0"}),
+            html.P(d["description"], style={"fontSize": "12px", "color": "#4a6070", "margin": "6px 0", "lineHeight": "1.6"}),
             html.Table([
                 html.Thead(html.Tr([
-                    html.Th("Indicator", style={"fontSize": "11px", "padding": "4px 8px", "backgroundColor": "#f0f4f8"}),
-                    html.Th("Value", style={"fontSize": "11px", "padding": "4px 8px", "backgroundColor": "#f0f4f8"}),
-                    html.Th("Trend", style={"fontSize": "11px", "padding": "4px 8px", "backgroundColor": "#f0f4f8"}),
+                    html.Th("Indicator", style={"fontSize": "11px", "padding": "8px 10px", "color": FLC_NAVY, "fontWeight": "700",
+                                                "borderBottom": f"2px solid {FLC_BLUE}", "textTransform": "uppercase", "letterSpacing": "0.5px", "backgroundColor": BG_WHITE}),
+                    html.Th("Value", style={"fontSize": "11px", "padding": "8px 10px", "color": FLC_NAVY, "fontWeight": "700",
+                                            "borderBottom": f"2px solid {FLC_BLUE}", "textTransform": "uppercase", "letterSpacing": "0.5px", "backgroundColor": BG_WHITE}),
+                    html.Th("Trend", style={"fontSize": "11px", "padding": "8px 10px", "color": FLC_NAVY, "fontWeight": "700",
+                                            "borderBottom": f"2px solid {FLC_BLUE}", "textTransform": "uppercase", "letterSpacing": "0.5px", "backgroundColor": BG_WHITE}),
                 ])),
                 html.Tbody(ind_rows),
-            ], style={"width": "100%", "borderCollapse": "collapse", "marginTop": "8px"}),
-        ], style={**CARD_STYLE, "padding": "14px"}))
+            ], style={"width": "100%", "borderCollapse": "collapse", "marginTop": "10px", "border": f"1px solid {FLC_BLUE_PALE}"}),
+        ], style={**CARD_STYLE, "padding": "16px", "borderLeft": f"3px solid {accent}"}))
 
     insight_box = html.Div([
         html.H3("Strategic Implications", style={**SECTION_TITLE, "fontSize": "16px"}),
-        html.Ul([html.Li(i, style={"marginBottom": "8px", "fontSize": "13px"}) for i in PORTERS_INSIGHTS]),
+        html.Ul([html.Li(i, style={"marginBottom": "8px", "fontSize": "13px", "color": "#4a6070", "lineHeight": "1.6"}) for i in PORTERS_INSIGHTS]),
     ], style=CARD_STYLE)
 
     return html.Div([
@@ -517,34 +607,39 @@ def build_gray_tab():
     fig.add_vline(x=55, line_dash="dash", line_color="#aaa", line_width=1)
 
     fig.update_layout(
-        title="Gray Associates Portfolio Matrix: Market Score vs. Program Economics",
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="Gray Associates Portfolio Matrix: Market Score vs. Program Economics"),
         xaxis_title="Program Economics Score (Revenue Efficiency)",
         yaxis_title="Market Score (Student Demand + Employment + Competition)",
-        height=600, template="plotly_white",
+        height=600,
         margin=dict(l=50, r=30, t=50, b=50),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
         annotations=[
             dict(x=30, y=80, text="SUSTAIN", showarrow=False,
-                 font=dict(size=14, color="#3498db"), opacity=0.4),
+                 font=dict(size=14, color=FLC_BLUE_LIGHT), opacity=0.5),
             dict(x=80, y=80, text="GROW", showarrow=False,
-                 font=dict(size=14, color="#2ecc71"), opacity=0.4),
+                 font=dict(size=14, color=FLC_NAVY), opacity=0.5),
             dict(x=30, y=30, text="SUNSET REVIEW", showarrow=False,
-                 font=dict(size=14, color="#e74c3c"), opacity=0.4),
+                 font=dict(size=14, color=CLR_HIGH), opacity=0.5),
             dict(x=80, y=30, text="TRANSFORM", showarrow=False,
-                 font=dict(size=14, color="#f39c12"), opacity=0.4),
+                 font=dict(size=14, color=CLR_MEDIUM), opacity=0.5),
         ],
     )
 
     # Recommendation summary bar
     rec_counts = df["GA_Recommendation"].value_counts()
+    ga_blue_map = {"Grow": FLC_NAVY, "Sustain": FLC_BLUE, "Transform": FLC_BLUE_LIGHT,
+                   "Evaluate": "#5ba3d9", "Sunset Review": "#8cc0e8"}
     fig_bar = go.Figure(data=[go.Bar(
         x=rec_counts.index, y=rec_counts.values,
-        marker_color=[GA_RECOMMENDATION_COLORS.get(r, "#999") for r in rec_counts.index],
+        marker_color=[ga_blue_map.get(r, "#b8d8f0") for r in rec_counts.index],
         text=rec_counts.values, textposition="outside",
+        textfont=dict(color=FLC_NAVY, size=12, family="Segoe UI"),
     )])
     fig_bar.update_layout(
-        title="Programs by Recommendation", height=300,
-        template="plotly_white", margin=dict(l=40, r=20, t=50, b=30),
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="Programs by Recommendation"), height=300,
+        margin=dict(l=40, r=20, t=50, b=30),
         yaxis_title="Number of Programs",
     )
 
@@ -552,11 +647,12 @@ def build_gray_tab():
                    "Competition_Score", "Market_Score", "Economics_Score",
                    "Mission_Alignment", "GA_Recommendation"]].sort_values("Market_Score", ascending=False)
 
+    # Blue-toned recommendation colors for table rows
     rec_color_map = {
-        "Grow": "#e8f5e9", "Sustain": "#e3f2fd", "Transform": "#fff3e0",
-        "Evaluate": "#fce4ec", "Sunset Review": "#ffebee",
+        "Grow": FLC_BLUE_WASH, "Sustain": FLC_BLUE_PALE,
+        "Transform": "#e8f0f8", "Evaluate": "#f0f4f8", "Sunset Review": "#f5f0f0",
     }
-    style_conditions = [
+    style_conditions = TABLE_ROW_BANDING + [
         {"if": {"filter_query": f'{{GA_Recommendation}} = "{rec}"'},
          "backgroundColor": color}
         for rec, color in rec_color_map.items()
@@ -576,7 +672,7 @@ def build_gray_tab():
             ], style={**CARD_STYLE, "flex": "1"}),
             html.Div([
                 html.H3("Key Insights", style={**SECTION_TITLE, "fontSize": "16px"}),
-                html.Ul([html.Li(i, style={"marginBottom": "8px", "fontSize": "13px"}) for i in GA_INSIGHTS]),
+                html.Ul([html.Li(i, style={"marginBottom": "8px", "fontSize": "13px", "color": "#4a6070", "lineHeight": "1.6"}) for i in GA_INSIGHTS]),
             ], style={**CARD_STYLE, "flex": "1"}),
         ], style={"display": "flex", "gap": "16px"}),
         html.H3("Program Scorecard", style={**SECTION_TITLE, "fontSize": "16px"}),
@@ -593,8 +689,8 @@ def build_gray_tab():
                 {"name": "Mission", "id": "Mission_Alignment"},
                 {"name": "Recommendation", "id": "GA_Recommendation"},
             ],
-            style_cell={"textAlign": "center", "padding": "6px", "fontSize": "12px"},
-            style_header={"backgroundColor": FLC_NAVY, "color": "white", "fontWeight": "bold", "fontSize": "11px"},
+            style_cell=TABLE_CELL_STYLE,
+            style_header=TABLE_HEADER_STYLE,
             style_data_conditional=style_conditions,
             sort_action="native",
             filter_action="native",
@@ -629,19 +725,20 @@ def build_bcg_tab():
 
     annotations = [
         dict(x=1.5, y=14, text="Question Marks", showarrow=False,
-             font=dict(size=13, color="#f1c40f", family="Arial Black"), opacity=0.5),
+             font=dict(size=13, color="#5ba3d9", family="Segoe UI"), opacity=0.6),
         dict(x=8, y=14, text="Stars", showarrow=False,
-             font=dict(size=13, color="#2ecc71", family="Arial Black"), opacity=0.5),
+             font=dict(size=13, color=FLC_NAVY, family="Segoe UI"), opacity=0.6),
         dict(x=1.5, y=-28, text="Concerns", showarrow=False,
-             font=dict(size=13, color="#e74c3c", family="Arial Black"), opacity=0.5),
+             font=dict(size=13, color="#8cc0e8", family="Segoe UI"), opacity=0.6),
         dict(x=8, y=-28, text="Cash Cows", showarrow=False,
-             font=dict(size=13, color="#3498db", family="Arial Black"), opacity=0.5),
+             font=dict(size=13, color=FLC_BLUE, family="Segoe UI"), opacity=0.6),
     ]
     fig.update_layout(
-        title="BCG Growth-Share Matrix (Departments)",
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="BCG Growth-Share Matrix (Departments)"),
         xaxis_title="23-24 % of Total SCH (Market Share)",
         yaxis_title="2-Year Change % (Growth Rate)",
-        height=600, template="plotly_white",
+        height=600,
         annotations=annotations,
         margin=dict(l=50, r=30, t=50, b=50),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
@@ -655,7 +752,7 @@ def build_bcg_tab():
 
     insight_list = html.Div([
         html.H3("Key Insights", style={**SECTION_TITLE, "fontSize": "16px"}),
-        html.Ul([html.Li(i, style={"marginBottom": "8px", "fontSize": "13px"}) for i in BCG_INSIGHTS]),
+        html.Ul([html.Li(i, style={"marginBottom": "8px", "fontSize": "13px", "color": "#4a6070", "lineHeight": "1.6"}) for i in BCG_INSIGHTS]),
     ], style=CARD_STYLE)
 
     return html.Div([
@@ -676,11 +773,11 @@ def build_bcg_tab():
                         {"name": "Avg SCH %", "id": "Avg_SCH_Pct"},
                         {"name": "Avg 2-Yr Change", "id": "Avg_Change"},
                     ],
-                    style_cell={"textAlign": "center", "padding": "8px", "fontSize": "13px"},
-                    style_header={"backgroundColor": FLC_NAVY, "color": "white", "fontWeight": "bold"},
-                    style_data_conditional=[
-                        {"if": {"filter_query": '{Quadrant} = "Star"'}, "backgroundColor": "#e8f5e9"},
-                        {"if": {"filter_query": '{Quadrant} = "Concern"'}, "backgroundColor": "#fce4ec"},
+                    style_cell=TABLE_CELL_STYLE,
+                    style_header=TABLE_HEADER_STYLE,
+                    style_data_conditional=TABLE_ROW_BANDING + [
+                        {"if": {"filter_query": '{Quadrant} = "Star"'}, "backgroundColor": FLC_BLUE_WASH},
+                        {"if": {"filter_query": '{Quadrant} = "Concern"'}, "backgroundColor": "#f5f0f0"},
                     ],
                 ),
             ], style={**CARD_STYLE, "flex": "1"}),
@@ -706,7 +803,7 @@ def build_swot_tab():
                 }),
             ], style={
                 "padding": "10px", "marginBottom": "8px",
-                "backgroundColor": "#fafafa", "borderRadius": "6px",
+                "backgroundColor": FLC_BLUE_WASH, "borderRadius": "6px",
                 "borderLeft": f"3px solid {data['color']}",
             }))
 
@@ -726,20 +823,6 @@ def build_swot_tab():
             html.Div(items),
         ], style={**CARD_STYLE, "flex": "1", "minWidth": "420px"}))
 
-    # SWOT summary counts for visualization
-    fig_counts = go.Figure(data=[go.Bar(
-        x=["Strengths", "Weaknesses", "Opportunities", "Threats"],
-        y=[len(SWOT_DATA[k]["items"]) for k in ["Strengths", "Weaknesses", "Opportunities", "Threats"]],
-        marker_color=[SWOT_DATA[k]["color"] for k in ["Strengths", "Weaknesses", "Opportunities", "Threats"]],
-        text=[len(SWOT_DATA[k]["items"]) for k in ["Strengths", "Weaknesses", "Opportunities", "Threats"]],
-        textposition="outside",
-    )])
-    fig_counts.update_layout(
-        title="SWOT Factor Count by Category", height=280,
-        template="plotly_white", margin=dict(l=40, r=20, t=50, b=30),
-        yaxis_title="Number of Factors",
-    )
-
     return html.Div([
         html.H2("SWOT Analysis", style=SECTION_TITLE),
         html.P(
@@ -748,17 +831,25 @@ def build_swot_tab():
             "Each item includes source attribution to its originating framework(s).",
             style={
                 "fontSize": "13px", "color": "#444", "lineHeight": "1.6",
-                "backgroundColor": "#f8fafc", "padding": "12px 16px",
-                "borderLeft": f"4px solid {FLC_GOLD}", "borderRadius": "4px",
+                "backgroundColor": FLC_BLUE_WASH, "padding": "14px 18px",
+                "borderLeft": f"4px solid {FLC_BLUE}", "borderRadius": "4px",
                 "marginBottom": "16px",
             },
         ),
         data_source_badge("SWOT Analysis"),
-
         html.Div([
-            dcc.Graph(figure=fig_counts, config={"displayModeBar": False}),
-            source_annotation("Source: Cross-framework synthesis of PESTLE, Porter's, Gray Associates, BCG analyses"),
-        ], style=CARD_STYLE),
+            html.Button(
+                "Download SWOT Matrix (.pptx)",
+                id="dl-swot-pptx-btn",
+                style={
+                    "backgroundColor": FLC_BLUE, "color": "white", "border": "none",
+                    "padding": "9px 18px", "borderRadius": "6px", "cursor": "pointer",
+                    "fontSize": "12px", "fontWeight": "600", "marginRight": "8px",
+                    "transition": "background-color 0.2s ease", "letterSpacing": "0.2px",
+                },
+            ),
+            dcc.Download(id="dl-swot-pptx"),
+        ], style={"marginBottom": "16px"}),
 
         # 2x2 SWOT grid
         html.Div([quadrants[0], quadrants[1]], style={"display": "flex", "gap": "16px", "flexWrap": "wrap"}),
@@ -772,15 +863,16 @@ def build_zone_to_win_tab():
     zone_cards = []
     for zone_name, zone_data in ZONE_TO_WIN_DATA.items():
         programs = zone_data["programs"]
-        inv_colors = {"High": "#e74c3c", "Medium": "#f39c12", "Low": "#3498db"}
+        inv_colors = {"High": CLR_HIGH, "Medium": CLR_MEDIUM, "Low": FLC_BLUE}
         program_rows = []
-        for p in programs:
+        for pi, p in enumerate(programs):
+            row_bg = FLC_BLUE_WASH if pi % 2 == 0 else BG_WHITE
             program_rows.append(html.Tr([
-                html.Td(p["name"], style={"fontSize": "12px", "padding": "6px 8px", "fontWeight": "600"}),
-                html.Td(p["action"], style={"fontSize": "12px", "padding": "6px 8px"}),
+                html.Td(p["name"], style={"fontSize": "12px", "padding": "8px 10px", "fontWeight": "600", "color": FLC_NAVY, "backgroundColor": row_bg}),
+                html.Td(p["action"], style={"fontSize": "12px", "padding": "8px 10px", "color": "#4a6070", "backgroundColor": row_bg}),
                 html.Td(p["investment"], style={
-                    "fontSize": "12px", "padding": "6px 8px", "textAlign": "center",
-                    "color": inv_colors.get(p["investment"], "#999"), "fontWeight": "600",
+                    "fontSize": "12px", "padding": "8px 10px", "textAlign": "center",
+                    "color": inv_colors.get(p["investment"], CLR_NEUTRAL), "fontWeight": "700", "backgroundColor": row_bg,
                 }),
             ]))
 
@@ -799,12 +891,15 @@ def build_zone_to_win_tab():
             html.P(zone_data["description"], style={"fontSize": "12px", "color": "#555", "marginBottom": "8px"}),
             html.Table([
                 html.Thead(html.Tr([
-                    html.Th("Program/Initiative", style={"fontSize": "11px", "padding": "6px 8px", "backgroundColor": "#f0f4f8"}),
-                    html.Th("Strategic Action", style={"fontSize": "11px", "padding": "6px 8px", "backgroundColor": "#f0f4f8"}),
-                    html.Th("Investment", style={"fontSize": "11px", "padding": "6px 8px", "backgroundColor": "#f0f4f8", "textAlign": "center"}),
+                    html.Th("Program/Initiative", style={"fontSize": "11px", "padding": "8px 10px", "backgroundColor": BG_WHITE, "color": FLC_NAVY,
+                                                         "fontWeight": "700", "borderBottom": f"2px solid {FLC_BLUE}", "textTransform": "uppercase", "letterSpacing": "0.5px"}),
+                    html.Th("Strategic Action", style={"fontSize": "11px", "padding": "8px 10px", "backgroundColor": BG_WHITE, "color": FLC_NAVY,
+                                                       "fontWeight": "700", "borderBottom": f"2px solid {FLC_BLUE}", "textTransform": "uppercase", "letterSpacing": "0.5px"}),
+                    html.Th("Investment", style={"fontSize": "11px", "padding": "8px 10px", "backgroundColor": BG_WHITE, "color": FLC_NAVY,
+                                                 "fontWeight": "700", "borderBottom": f"2px solid {FLC_BLUE}", "textTransform": "uppercase", "letterSpacing": "0.5px", "textAlign": "center"}),
                 ])),
                 html.Tbody(program_rows),
-            ], style={"width": "100%", "borderCollapse": "collapse"}),
+            ], style={"width": "100%", "borderCollapse": "collapse", "border": f"1px solid {FLC_BLUE_PALE}"}),
         ], style={**CARD_STYLE, "borderLeft": f"4px solid {zone_data['color']}"}))
 
     # Zone allocation pie chart for each scenario
@@ -821,7 +916,8 @@ def build_zone_to_win_tab():
             hole=0.4, textinfo="label+percent",
         )])
         fig_pie.update_layout(
-            title=f"{scenario_name} Scenario", height=280,
+            template=FLC_CHART_TEMPLATE,
+            title=dict(text=f"{scenario_name} Scenario"), height=280,
             margin=dict(l=20, r=20, t=40, b=20), showlegend=False,
         )
         scenario_figs.append((scenario_name, s_data, fig_pie))
@@ -840,9 +936,9 @@ def build_zone_to_win_tab():
             textposition="outside",
         ))
     fig_compare.update_layout(
-        title="Scenario Target Comparison",
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="Scenario Target Comparison"),
         barmode="group", height=380,
-        template="plotly_white",
         margin=dict(l=40, r=20, t=50, b=30),
     )
 
@@ -854,8 +950,8 @@ def build_zone_to_win_tab():
             "and Transformation (future-defining bets). Three scenarios model different resource allocation strategies.",
             style={
                 "fontSize": "13px", "color": "#444", "lineHeight": "1.6",
-                "backgroundColor": "#f8fafc", "padding": "12px 16px",
-                "borderLeft": f"4px solid {FLC_GOLD}", "borderRadius": "4px",
+                "backgroundColor": FLC_BLUE_WASH, "padding": "14px 18px",
+                "borderLeft": f"4px solid {FLC_BLUE}", "borderRadius": "4px",
                 "marginBottom": "16px",
             },
         ),
@@ -898,11 +994,8 @@ def build_roadmap_tab():
     """Phase 3: Strategic Roadmap with timeline, KPIs, Gantt, milestones, and risks."""
     rm = ROADMAP_MILESTONES.copy()
 
-    # Gantt-style timeline
-    status_colors = {
-        "Complete": "#2ecc71", "In Progress": "#3498db",
-        "Not Started": "#95a5a6", "Upcoming": "#f39c12",
-    }
+    # Gantt-style timeline (blue-family status colors)
+    status_colors = STATUS_COLORS
     fig_gantt = go.Figure()
     for _, row in rm.iterrows():
         color = status_colors.get(row["Status"], "#999")
@@ -918,8 +1011,9 @@ def build_roadmap_tab():
             hoverinfo="text",
         ))
     fig_gantt.update_layout(
-        title="Strategic Implementation Timeline (2025-2027)",
-        height=700, template="plotly_white",
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="Strategic Implementation Timeline (2025-2027)"),
+        height=700,
         margin=dict(l=340, r=30, t=50, b=50),
         xaxis_title="Timeline",
         barmode="overlay",
@@ -940,23 +1034,27 @@ def build_roadmap_tab():
         hole=0.5, textinfo="label+value",
     )])
     fig_status.update_layout(
-        title="Milestone Status", height=280,
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="Milestone Status"), height=280,
         margin=dict(l=20, r=20, t=40, b=20), showlegend=False,
     )
 
     # Zone distribution
     zone_counts = rm["Zone"].value_counts()
+    zone_blue_map = {
+        "Performance": FLC_NAVY, "Productivity": FLC_BLUE,
+        "Incubation": FLC_BLUE_LIGHT, "Transformation": "#5ba3d9", "All": "#8cc0e8",
+    }
     fig_zone = go.Figure(data=[go.Bar(
         x=zone_counts.index, y=zone_counts.values,
-        marker_color=[{
-            "Performance": "#2ecc71", "Productivity": "#3498db",
-            "Incubation": "#f39c12", "Transformation": "#9b59b6", "All": FLC_NAVY,
-        }.get(z, "#999") for z in zone_counts.index],
+        marker_color=[zone_blue_map.get(z, "#b8d8f0") for z in zone_counts.index],
         text=zone_counts.values, textposition="outside",
+        textfont=dict(color=FLC_NAVY, size=12),
     )])
     fig_zone.update_layout(
-        title="Milestones by Zone", height=280,
-        template="plotly_white", margin=dict(l=40, r=20, t=50, b=30),
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="Milestones by Zone"), height=280,
+        margin=dict(l=40, r=20, t=50, b=30),
     )
 
     # KPIs table with progress visualization
@@ -970,7 +1068,7 @@ def build_roadmap_tab():
         kpi_fig.add_trace(go.Bar(
             y=[row["KPI"]], x=[y1 - baseline], base=[baseline],
             orientation="h", name="Year 1" if _ == 0 else None,
-            marker=dict(color="#3498db", opacity=0.7),
+            marker=dict(color=FLC_BLUE, opacity=0.8),
             showlegend=(_ == 0),
             hovertext=f"{row['KPI']}: Baseline={baseline}, Y1={y1}, Y2={y2}, Stretch={stretch}",
             hoverinfo="text",
@@ -978,21 +1076,21 @@ def build_roadmap_tab():
         kpi_fig.add_trace(go.Bar(
             y=[row["KPI"]], x=[y2 - y1], base=[y1],
             orientation="h", name="Year 2" if _ == 0 else None,
-            marker=dict(color="#2ecc71", opacity=0.7),
+            marker=dict(color=FLC_BLUE_LIGHT, opacity=0.8),
             showlegend=(_ == 0),
             hoverinfo="skip",
         ))
         kpi_fig.add_trace(go.Bar(
             y=[row["KPI"]], x=[stretch - y2], base=[y2],
             orientation="h", name="Stretch" if _ == 0 else None,
-            marker=dict(color="#f39c12", opacity=0.5),
+            marker=dict(color="#8cc0e8", opacity=0.6),
             showlegend=(_ == 0),
             hoverinfo="skip",
         ))
     kpi_fig.update_layout(
-        title="KPI Targets: Baseline to Stretch",
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="KPI Targets: Baseline to Stretch"),
         barmode="stack", height=500,
-        template="plotly_white",
         margin=dict(l=200, r=40, t=50, b=30),
         legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="center", x=0.5),
     )
@@ -1011,13 +1109,14 @@ def build_roadmap_tab():
         marker=dict(
             size=risk_df["Risk_Score"] * 8 + 10,
             color=risk_df["Risk_Score"],
-            colorscale=[[0, "#2ecc71"], [0.5, "#f39c12"], [1, "#e74c3c"]],
-            showscale=True, colorbar=dict(title="Risk Score"),
-            opacity=0.8,
+            colorscale=[[0, "#8cc0e8"], [0.5, FLC_BLUE], [1, FLC_NAVY]],
+            showscale=True, colorbar=dict(title="Risk Score", tickfont=dict(color=FLC_NAVY)),
+            opacity=0.85,
+            line=dict(width=1, color="white"),
         ),
         text=risk_df["Risk"].str[:30],
         textposition="top center",
-        textfont=dict(size=9),
+        textfont=dict(size=9, color=FLC_NAVY),
         hovertext=risk_df.apply(
             lambda r: f"{r['Risk']}<br>Prob: {r['Probability']}, Impact: {r['Impact']}<br>Mitigation: {r['Mitigation_Strategy'][:100]}...",
             axis=1,
@@ -1025,19 +1124,20 @@ def build_roadmap_tab():
         hoverinfo="text",
     ))
     fig_risk.update_layout(
-        title="Risk Assessment Matrix",
+        template=FLC_CHART_TEMPLATE,
+        title=dict(text="Risk Assessment Matrix"),
         xaxis=dict(title="Probability", tickvals=[1, 2, 3], ticktext=["Low", "Medium", "High"], range=[0.5, 3.5]),
         yaxis=dict(title="Impact", tickvals=[1, 2, 3], ticktext=["Low", "Medium", "High"], range=[0.5, 3.5]),
-        height=450, template="plotly_white",
+        height=450,
         margin=dict(l=60, r=30, t=50, b=50),
     )
-    # Add risk zones
+    # Add risk zones (blue-toned)
     fig_risk.add_shape(type="rect", x0=0.5, y0=2.5, x1=1.5, y1=3.5,
-                       fillcolor="rgba(243,156,18,0.1)", line_width=0)
+                       fillcolor="rgba(0,102,179,0.06)", line_width=0)
     fig_risk.add_shape(type="rect", x0=1.5, y0=1.5, x1=3.5, y1=3.5,
-                       fillcolor="rgba(231,76,60,0.1)", line_width=0)
+                       fillcolor="rgba(0,48,87,0.08)", line_width=0)
     fig_risk.add_shape(type="rect", x0=0.5, y0=0.5, x1=1.5, y1=1.5,
-                       fillcolor="rgba(46,204,113,0.1)", line_width=0)
+                       fillcolor="rgba(140,192,232,0.08)", line_width=0)
 
     return html.Div([
         html.H2("Strategic Roadmap", style=SECTION_TITLE),
@@ -1046,8 +1146,8 @@ def build_roadmap_tab():
             "milestones, KPI targets, and risk mitigation strategies across the 2025-2027 planning horizon.",
             style={
                 "fontSize": "13px", "color": "#444", "lineHeight": "1.6",
-                "backgroundColor": "#f8fafc", "padding": "12px 16px",
-                "borderLeft": f"4px solid {FLC_GOLD}", "borderRadius": "4px",
+                "backgroundColor": FLC_BLUE_WASH, "padding": "14px 18px",
+                "borderLeft": f"4px solid {FLC_BLUE}", "borderRadius": "4px",
                 "marginBottom": "16px",
             },
         ),
@@ -1083,13 +1183,12 @@ def build_roadmap_tab():
                 {"name": "Zone", "id": "Zone"},
                 {"name": "Owner", "id": "Owner"},
             ],
-            style_cell={"textAlign": "left", "padding": "6px", "fontSize": "12px",
-                         "whiteSpace": "normal", "height": "auto"},
-            style_header={"backgroundColor": FLC_NAVY, "color": "white", "fontWeight": "bold", "fontSize": "11px"},
-            style_data_conditional=[
-                {"if": {"filter_query": '{Status} = "Complete"'}, "backgroundColor": "#e8f5e9"},
-                {"if": {"filter_query": '{Status} = "In Progress"'}, "backgroundColor": "#e3f2fd"},
-                {"if": {"filter_query": '{Status} = "Upcoming"'}, "backgroundColor": "#fff8e1"},
+            style_cell={**TABLE_CELL_STYLE, "textAlign": "left", "whiteSpace": "normal", "height": "auto"},
+            style_header=TABLE_HEADER_STYLE,
+            style_data_conditional=TABLE_ROW_BANDING + [
+                {"if": {"filter_query": '{Status} = "Complete"'}, "backgroundColor": FLC_BLUE_WASH},
+                {"if": {"filter_query": '{Status} = "In Progress"'}, "backgroundColor": FLC_BLUE_PALE},
+                {"if": {"filter_query": '{Status} = "Upcoming"'}, "backgroundColor": "#e8f0f8"},
             ],
             sort_action="native",
             filter_action="native",
@@ -1115,8 +1214,9 @@ def build_roadmap_tab():
                 {"name": "Unit", "id": "Unit"},
                 {"name": "Measurement", "id": "Measurement"},
             ],
-            style_cell={"textAlign": "center", "padding": "6px", "fontSize": "12px"},
-            style_header={"backgroundColor": FLC_NAVY, "color": "white", "fontWeight": "bold", "fontSize": "11px"},
+            style_cell=TABLE_CELL_STYLE,
+            style_header=TABLE_HEADER_STYLE,
+            style_data_conditional=TABLE_ROW_BANDING,
             sort_action="native",
         )], style=CARD_STYLE),
 
@@ -1136,14 +1236,13 @@ def build_roadmap_tab():
                 {"name": "Mitigation Strategy", "id": "Mitigation_Strategy"},
                 {"name": "Owner", "id": "Owner"},
             ],
-            style_cell={"textAlign": "left", "padding": "8px", "fontSize": "12px",
-                         "whiteSpace": "normal", "height": "auto"},
-            style_header={"backgroundColor": FLC_NAVY, "color": "white", "fontWeight": "bold", "fontSize": "11px"},
-            style_data_conditional=[
+            style_cell={**TABLE_CELL_STYLE, "textAlign": "left", "whiteSpace": "normal", "height": "auto"},
+            style_header=TABLE_HEADER_STYLE,
+            style_data_conditional=TABLE_ROW_BANDING + [
                 {"if": {"filter_query": '{Impact} = "High"', "column_id": "Impact"},
-                 "color": "#e74c3c", "fontWeight": "bold"},
+                 "color": FLC_NAVY, "fontWeight": "bold", "backgroundColor": "#e8f0f8"},
                 {"if": {"filter_query": '{Probability} = "High"', "column_id": "Probability"},
-                 "color": "#e74c3c", "fontWeight": "bold"},
+                 "color": FLC_NAVY, "fontWeight": "bold", "backgroundColor": "#e8f0f8"},
             ],
             sort_action="native",
         )], style=CARD_STYLE),
@@ -1155,23 +1254,31 @@ def build_roadmap_tab():
 # ============================================================================
 
 app.layout = html.Div([
-    # Header
+    # Header with mountain silhouette gradient
     html.Div([
         html.Div([
             html.H1("Fort Lewis College", style={
-                "color": "white", "margin": "0", "fontSize": "24px", "fontWeight": "bold",
+                "color": "white", "margin": "0", "fontSize": "26px", "fontWeight": "800",
+                "letterSpacing": "0.5px", "textShadow": "0 1px 3px rgba(0,0,0,0.2)",
             }),
             html.Div("Portfolio Optimization Dashboard", style={
-                "color": FLC_GOLD, "fontSize": "14px", "fontWeight": "600",
+                "color": FLC_BLUE_PALE, "fontSize": "14px", "fontWeight": "500",
+                "marginTop": "2px", "letterSpacing": "0.3px",
             }),
-        ], style={"flex": "1"}),
+        ], style={"flex": "1", "position": "relative", "zIndex": "10"}),
         html.Div([
-            html.Div("Phase 1: Environmental Scanning | Phase 2: Strategic Synthesis | Phase 3: Strategic Direction", style={
-                "color": "#aaa", "fontSize": "11px",
+            html.Div("Phase 1: Environmental Scanning", style={
+                "color": "rgba(255,255,255,0.7)", "fontSize": "11px",
             }),
-        ]),
-    ], style={
-        "backgroundColor": FLC_NAVY, "padding": "16px 24px",
+            html.Div("Phase 2: Strategic Synthesis", style={
+                "color": "rgba(255,255,255,0.7)", "fontSize": "11px",
+            }),
+            html.Div("Phase 3: Strategic Direction", style={
+                "color": "rgba(255,255,255,0.7)", "fontSize": "11px",
+            }),
+        ], style={"textAlign": "right", "position": "relative", "zIndex": "10"}),
+    ], className="flc-header", style={
+        "padding": "20px 28px 36px 28px",
         "display": "flex", "alignItems": "center", "justifyContent": "space-between",
     }),
 
@@ -1185,25 +1292,35 @@ app.layout = html.Div([
         dcc.Tab(label="SWOT Analysis", value="swot", style=TAB_STYLE, selected_style=TAB_SELECTED),
         dcc.Tab(label="Zone to Win", value="zonetowin", style=TAB_STYLE, selected_style=TAB_SELECTED),
         dcc.Tab(label="Strategic Roadmap", value="roadmap", style=TAB_STYLE, selected_style=TAB_SELECTED),
-    ], style={"marginBottom": "0"}),
+    ], style={"marginBottom": "0", "backgroundColor": BG_WHITE, "borderBottom": f"1px solid {FLC_BORDER}"}),
 
     # Tab content
     html.Div(id="tab-content", style={
-        "padding": "20px 24px",
+        "padding": "24px 28px",
         "backgroundColor": FLC_LIGHT,
-        "minHeight": "calc(100vh - 140px)",
+        "minHeight": "calc(100vh - 180px)",
+        "position": "relative",
+        "zIndex": "1",
     }),
 
-    # Footer
+    # Footer with mountain silhouette
     html.Div([
-        html.Span("Fort Lewis College Portfolio Optimization Project | "),
-        html.Span("Phase 1: PESTLE, Porter's, Gray Associates, BCG | "),
-        html.Span("Phase 2: SWOT Synthesis | Phase 3: Zone to Win & Roadmap"),
-    ], style={
-        "backgroundColor": FLC_NAVY, "color": "#aaa", "padding": "10px 24px",
+        html.Div([
+            html.Span("Fort Lewis College Portfolio Optimization Project", style={
+                "fontWeight": "600", "color": "rgba(255,255,255,0.9)",
+            }),
+            html.Span(" | ", style={"color": "rgba(255,255,255,0.4)"}),
+            html.Span("PESTLE  |  Porter's  |  Gray Associates  |  BCG  |  SWOT  |  Zone to Win  |  Roadmap", style={
+                "color": "rgba(255,255,255,0.6)", "fontSize": "10px",
+            }),
+        ], style={"position": "relative", "zIndex": "10"}),
+    ], className="flc-footer", style={
+        "backgroundColor": FLC_NAVY, "color": "#aaa", "padding": "20px 28px 14px 28px",
         "fontSize": "11px", "textAlign": "center",
     }),
-], style={"fontFamily": "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"})
+], className="flc-topo-bg", style={
+    "fontFamily": "'Segoe UI', -apple-system, BlinkMacSystemFont, Tahoma, Geneva, Verdana, sans-serif",
+})
 
 
 # ============================================================================
@@ -1298,6 +1415,16 @@ def dl_bcg_docx(n):
 )
 def dl_bcg_pptx(n):
     return dcc.send_file(os.path.join(GENERATED_DOCS_DIR, "BCG_Slide_Deck.pptx"))
+
+
+@app.callback(
+    Output("dl-swot-pptx", "data"),
+    Input("dl-swot-pptx-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def dl_swot_pptx(n):
+    path = generate_swot_pptx()
+    return dcc.send_file(path)
 
 
 # ============================================================================
