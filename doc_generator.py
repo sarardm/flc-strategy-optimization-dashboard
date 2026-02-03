@@ -540,15 +540,8 @@ def generate_bcg_pptx():
 # SWOT MATRIX SLIDE
 # ============================================================================
 
-def generate_swot_pptx():
-    """Generate a single landscape SWOT matrix slide with 2x2 grid."""
-    prs = Presentation()
-    prs.slide_width = PptxInches(13.333)
-    prs.slide_height = PptxInches(7.5)
-
-    slide = prs.slides.add_slide(prs.slide_layouts[6])  # blank layout
-
-    # --- Title bar at top ---
+def _swot_slide_title(slide, title_text):
+    """Add FLC-branded title bar to a SWOT slide."""
     title_box = slide.shapes.add_textbox(
         PptxInches(0.4), PptxInches(0.25), PptxInches(12.5), PptxInches(0.6),
     )
@@ -557,11 +550,10 @@ def generate_swot_pptx():
     p = tf.paragraphs[0]
     p.alignment = PP_ALIGN.LEFT
     run = p.add_run()
-    run.text = "SWOT Analysis"
+    run.text = title_text
     run.font.size = PptxPt(28)
     run.font.color.rgb = PptxRGB(0x00, 0x30, 0x57)
     run.font.bold = True
-    # Subtitle
     p2 = tf.add_paragraph()
     p2.alignment = PP_ALIGN.LEFT
     run2 = p2.add_run()
@@ -572,86 +564,107 @@ def generate_swot_pptx():
     run2.font.size = PptxPt(11)
     run2.font.color.rgb = PptxRGB(0x66, 0x66, 0x66)
 
-    # --- Quadrant layout ---
-    quadrant_config = [
-        ("Strengths",     PptxRGB(0x2E, 0xCC, 0x71), 0.4,   1.15),  # top-left
-        ("Weaknesses",    PptxRGB(0xE7, 0x4C, 0x3C), 6.9,   1.15),  # top-right
-        ("Opportunities", PptxRGB(0x34, 0x98, 0xDB), 0.4,   4.3),   # bottom-left
-        ("Threats",       PptxRGB(0xE6, 0x7E, 0x22), 6.9,   4.3),   # bottom-right
-    ]
+
+def _swot_quadrant(slide, label, color, left, top, box_width, box_height):
+    """Render one SWOT quadrant on a slide."""
+    data = SWOT_DATA[label]
+
+    # Colored header bar
+    header = slide.shapes.add_textbox(
+        PptxInches(left), PptxInches(top), box_width, PptxInches(0.38),
+    )
+    header.fill.solid()
+    header.fill.fore_color.rgb = color
+    htf = header.text_frame
+    htf.word_wrap = True
+    htf.margin_top = PptxPt(3)
+    htf.margin_bottom = PptxPt(3)
+    htf.margin_left = PptxPt(8)
+    hp = htf.paragraphs[0]
+    hp.alignment = PP_ALIGN.LEFT
+    hr = hp.add_run()
+    hr.text = f"{label}  ({len(data['items'])} items)"
+    hr.font.size = PptxPt(13)
+    hr.font.bold = True
+    hr.font.color.rgb = PptxRGB(0xFF, 0xFF, 0xFF)
+
+    # Content body
+    body = slide.shapes.add_textbox(
+        PptxInches(left), PptxInches(top + 0.38),
+        box_width, PptxInches(box_height - 0.38),
+    )
+    body.fill.solid()
+    body.fill.fore_color.rgb = PptxRGB(0xFA, 0xFA, 0xFA)
+    body.line.color.rgb = PptxRGB(0xE0, 0xE0, 0xE0)
+    body.line.width = PptxPt(0.5)
+    btf = body.text_frame
+    btf.word_wrap = True
+    btf.margin_top = PptxPt(6)
+    btf.margin_left = PptxPt(8)
+    btf.margin_right = PptxPt(6)
+    btf.vertical_anchor = MSO_ANCHOR.TOP
+
+    for idx, item in enumerate(data["items"]):
+        # Title line (bold)
+        if idx == 0:
+            p_title = btf.paragraphs[0]
+        else:
+            p_title = btf.add_paragraph()
+        p_title.space_before = PptxPt(4) if idx > 0 else PptxPt(0)
+        p_title.space_after = PptxPt(1)
+        r_bullet = p_title.add_run()
+        r_bullet.text = f"\u2022 {item['title']}"
+        r_bullet.font.size = PptxPt(9)
+        r_bullet.font.bold = True
+        r_bullet.font.color.rgb = PptxRGB(0x00, 0x30, 0x57)
+
+        # Detail line
+        p_detail = btf.add_paragraph()
+        p_detail.space_before = PptxPt(0)
+        p_detail.space_after = PptxPt(1)
+        r_detail = p_detail.add_run()
+        r_detail.text = f"   {item['detail']}"
+        r_detail.font.size = PptxPt(7.5)
+        r_detail.font.color.rgb = PptxRGB(0x33, 0x33, 0x33)
+
+        # Source line (italic)
+        p_src = btf.add_paragraph()
+        p_src.space_before = PptxPt(0)
+        p_src.space_after = PptxPt(2)
+        r_src = p_src.add_run()
+        r_src.text = f"   Source: {item['source']}"
+        r_src.font.size = PptxPt(6.5)
+        r_src.font.italic = True
+        r_src.font.color.rgb = PptxRGB(0x99, 0x99, 0x99)
+
+
+def generate_swot_pptx():
+    """Generate two landscape SWOT slides: Internal Factors and External Factors."""
+    prs = Presentation()
+    prs.slide_width = PptxInches(13.333)
+    prs.slide_height = PptxInches(7.5)
+
     box_width = PptxInches(6.1)
-    box_height = PptxInches(2.95)
+    col_left = 0.4
+    col_right = 6.9
+    content_top = 1.15
+    content_height = 5.95  # full height below title area
 
-    for label, color, left, top in quadrant_config:
-        data = SWOT_DATA[label]
+    # --- Slide 1: Internal Factors (Strengths + Weaknesses) ---
+    slide1 = prs.slides.add_slide(prs.slide_layouts[6])
+    _swot_slide_title(slide1, "SWOT Analysis \u2014 Internal Factors")
+    _swot_quadrant(slide1, "Strengths", PptxRGB(0x2E, 0xCC, 0x71),
+                   col_left, content_top, box_width, content_height)
+    _swot_quadrant(slide1, "Weaknesses", PptxRGB(0xE7, 0x4C, 0x3C),
+                   col_right, content_top, box_width, content_height)
 
-        # Colored header bar
-        header = slide.shapes.add_textbox(
-            PptxInches(left), PptxInches(top), box_width, PptxInches(0.38),
-        )
-        header.fill.solid()
-        header.fill.fore_color.rgb = color
-        htf = header.text_frame
-        htf.word_wrap = True
-        htf.margin_top = PptxPt(3)
-        htf.margin_bottom = PptxPt(3)
-        htf.margin_left = PptxPt(8)
-        hp = htf.paragraphs[0]
-        hp.alignment = PP_ALIGN.LEFT
-        hr = hp.add_run()
-        hr.text = f"{label}  ({len(data['items'])} items)"
-        hr.font.size = PptxPt(13)
-        hr.font.bold = True
-        hr.font.color.rgb = PptxRGB(0xFF, 0xFF, 0xFF)
-
-        # Content body
-        body = slide.shapes.add_textbox(
-            PptxInches(left), PptxInches(top + 0.38),
-            box_width, PptxInches(box_height.inches - 0.38),
-        )
-        body.fill.solid()
-        body.fill.fore_color.rgb = PptxRGB(0xFA, 0xFA, 0xFA)
-        body.line.color.rgb = PptxRGB(0xE0, 0xE0, 0xE0)
-        body.line.width = PptxPt(0.5)
-        btf = body.text_frame
-        btf.word_wrap = True
-        btf.margin_top = PptxPt(6)
-        btf.margin_left = PptxPt(8)
-        btf.margin_right = PptxPt(6)
-        btf.vertical_anchor = MSO_ANCHOR.TOP
-
-        for idx, item in enumerate(data["items"]):
-            # Title line (bold)
-            if idx == 0:
-                p_title = btf.paragraphs[0]
-            else:
-                p_title = btf.add_paragraph()
-            p_title.space_before = PptxPt(4) if idx > 0 else PptxPt(0)
-            p_title.space_after = PptxPt(1)
-            r_bullet = p_title.add_run()
-            r_bullet.text = f"\u2022 {item['title']}"
-            r_bullet.font.size = PptxPt(9)
-            r_bullet.font.bold = True
-            r_bullet.font.color.rgb = PptxRGB(0x00, 0x30, 0x57)
-
-            # Detail line
-            p_detail = btf.add_paragraph()
-            p_detail.space_before = PptxPt(0)
-            p_detail.space_after = PptxPt(1)
-            r_detail = p_detail.add_run()
-            r_detail.text = f"   {item['detail']}"
-            r_detail.font.size = PptxPt(7.5)
-            r_detail.font.color.rgb = PptxRGB(0x33, 0x33, 0x33)
-
-            # Source line (italic)
-            p_src = btf.add_paragraph()
-            p_src.space_before = PptxPt(0)
-            p_src.space_after = PptxPt(2)
-            r_src = p_src.add_run()
-            r_src.text = f"   Source: {item['source']}"
-            r_src.font.size = PptxPt(6.5)
-            r_src.font.italic = True
-            r_src.font.color.rgb = PptxRGB(0x99, 0x99, 0x99)
+    # --- Slide 2: External Factors (Opportunities + Threats) ---
+    slide2 = prs.slides.add_slide(prs.slide_layouts[6])
+    _swot_slide_title(slide2, "SWOT Analysis \u2014 External Factors")
+    _swot_quadrant(slide2, "Opportunities", PptxRGB(0x34, 0x98, 0xDB),
+                   col_left, content_top, box_width, content_height)
+    _swot_quadrant(slide2, "Threats", PptxRGB(0xE6, 0x7E, 0x22),
+                   col_right, content_top, box_width, content_height)
 
     path = os.path.join(OUTPUT_DIR, "SWOT_Matrix.pptx")
     prs.save(path)
