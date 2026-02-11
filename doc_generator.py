@@ -17,9 +17,10 @@ from pptx.util import Emu
 
 from data import (
     INSTITUTION, PESTLE_DATA, PORTERS_DATA, PORTERS_INSIGHTS,
-    BCG_DATA, BCG_INSIGHTS, BCG_QUADRANT_COLORS,
+    BCG_DATA, BCG_DEPT_DATA, BCG_DEPT_INSIGHTS, BCG_INSIGHTS, BCG_QUADRANT_COLORS,
     GRAY_ASSOCIATES_DATA, GA_INSIGHTS, FRAMEWORK_DESCRIPTIONS,
-    SWOT_DATA,
+    SWOT_DATA, ZONE_TO_WIN_DATA, SCENARIOS, RISK_MITIGATION,
+    ROADMAP_MILESTONES, ROADMAP_KPIS,
 )
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "generated_docs")
@@ -126,31 +127,33 @@ def generate_pestle_docx():
         "require programmatic adaptation."
     ))
     _add_para(doc, (
-        "Technological, Legal, and Environmental factors are rated Medium impact (3/5) but "
-        "present notable opportunities. The AI Institute, online program expansion, and sustainability "
-        "leadership represent areas where FLC can differentiate and grow."
+        "Technological factors (4/5 impact) reflect a rapidly changing landscape: the online market is "
+        "saturated and FLC has no online brand, though AI is transforming delivery. Legal factors (4/5) "
+        "are deteriorating with NATW legal basis (CRS 23-52-105) requiring proactive documentation. "
+        "Environmental factors present both risk (wildfire/drought) and opportunity (outdoor brand)."
     ))
 
     _add_heading(doc, "4. Strategic Implications for Academic Affairs", 2)
     _add_para(doc, (
-        "The PESTLE analysis reveals that FLC operates in an environment where external economic "
-        "and political pressures demand proactive financial diversification. The institution cannot "
-        "rely solely on traditional state funding and in-person tuition revenue. Key strategic "
-        "imperatives include: (1) diversifying revenue through graduate programs and online offerings, "
-        "(2) strengthening the dual enrollment pipeline as a hedge against declining first-year "
-        "enrollment, (3) leveraging the Native American mission as a unique competitive advantage "
-        "rather than viewing it solely as a cost center, and (4) investing in technology and AI "
-        "capabilities as both a program differentiator and operational efficiency driver."
+        "The PESTLE analysis reveals that FLC operates in an environment of heightened political risk "
+        "and constrained resources. Federal DEI policy disruptions threaten TRIO programs and could "
+        "misclassify the statutory NATW mission. The Durango housing crisis constrains faculty/staff "
+        "recruitment. Key strategic imperatives include: (1) reframing Indigenous education through "
+        "statutory obligations (CRS 23-52-105) and state law (not DEI), (2) strengthening the dual enrollment pipeline "
+        "as a hedge against declining first-year enrollment, (3) improving retention as the most "
+        "cost-effective enrollment strategy, and (4) investing in AI capabilities while recognizing "
+        "that large-scale online expansion faces a saturated market where FLC has no brand."
     ))
 
     _add_heading(doc, "5. Recommendations", 2)
     recommendations = [
-        "Prioritize revenue diversification through graduate program expansion and online course development",
-        "Strengthen advocacy for state funding while reducing dependency through alternative revenue streams",
-        "Position Indigenous education mission as a national leadership opportunity attracting federal grants",
-        "Invest in AI Institute and sustainability programs as emerging institutional differentiators",
-        "Develop workforce-aligned certificates and micro-credentials to address student career expectations",
-        "Build data-driven retention programs targeting equity gaps in First-Gen and Pell-eligible populations",
+        "Proactively document NATW statutory basis (CRS 23-52-105) to protect against DEI misclassification",
+        "Prioritize retention improvement as the most cost-effective enrollment strategy (Compass, early-alert)",
+        "Grow dual enrollment pipeline and transfer pathways as near-term enrollment stabilizers",
+        "Frame Indigenous education through statutory obligations (CRS 23-52-105) and cultural preservation, not DEI language",
+        "Invest in AI Institute and experiential learning as place-based institutional differentiators",
+        "Qualify online expansion: pursue only Indigenous niche (NATW moat), not generic online degrees",
+        "Address Durango housing crisis impact on faculty/staff recruitment through institutional partnerships",
     ]
     for rec in recommendations:
         doc.add_paragraph(rec, style="List Bullet")
@@ -180,18 +183,18 @@ def generate_pestle_pptx():
         _pptx_content_slide(prs, f"{category} Factors", bullets)
 
     _pptx_content_slide(prs, "Impact Assessment Summary", [
-        "Highest impact: Economic (5/5), Political & Social (4/5 each)",
-        "Medium impact: Technological, Legal, Environmental (3/5 each)",
-        "Key risk: State funding volatility and tuition waiver revenue impact",
-        "Key opportunity: AI Institute, sustainability leadership, Indigenous education hub",
+        "Highest impact: Political (5/5), Economic (5/5)",
+        "High impact: Social (4/5), Technological (4/5), Legal (4/5)",
+        "Key risks: Federal DEI policy, tribal waiver vulnerability, Durango housing crisis",
+        "Key opportunity: Indigenous education (statutorily grounded), AI Institute, experiential learning",
     ])
 
     _pptx_content_slide(prs, "Strategic Recommendations", [
-        "Diversify revenue through graduate programs and online offerings",
-        "Strengthen advocacy while reducing state funding dependency",
-        "Position Indigenous mission as national leadership opportunity",
-        "Invest in AI Institute and sustainability as differentiators",
-        "Build data-driven retention programs for equity gap closure",
+        "Protect NATW statutory basis (CRS 23-52-105) from DEI misclassification",
+        "Prioritize retention as most cost-effective enrollment strategy",
+        "Frame Indigenous education through statutory/sovereign obligations, not DEI language",
+        "Invest in AI Institute and place-based experiential learning",
+        "Qualify online expansion: Indigenous niche only (NATW moat), not generic degrees",
     ])
 
     path = os.path.join(OUTPUT_DIR, "PESTLE_Slide_Deck.pptx")
@@ -231,10 +234,10 @@ def generate_porters_docx():
     _add_heading(doc, "3. Overall Competitive Assessment", 2)
     _add_para(doc, (
         "The aggregate competitive intensity facing Fort Lewis College is HIGH, with an average "
-        "force score of 3.8/5 across all five dimensions. Competitive Rivalry (4.5/5) and Bargaining "
-        "Power of Students (4.0/5) represent the most intense pressures. The higher education market "
-        "in Colorado features 30+ competing institutions, robust online program offerings from larger "
-        "universities, and increasing student price sensitivity."
+        "force score of 3.4/5 across all five dimensions. Competitive Rivalry (4.0/5) and Bargaining "
+        "Power of Students (4.0/5) represent the most intense pressures. Online competition, while "
+        "significant nationally, is unverified specifically for FLC's student population, which is "
+        "predominantly place-bound and values the residential outdoor experience."
     ))
     _add_para(doc, (
         "FLC's strongest defensive positions are its unique Native American mission and tuition "
@@ -425,70 +428,106 @@ def generate_gray_pptx():
 def generate_bcg_docx():
     doc = Document()
     _doc_header(doc, "BCG Growth-Share Matrix: Executive Summary",
-                "Department Portfolio Analysis for Fort Lewis College")
+                "Department & Major-Level Portfolio Analysis for Fort Lewis College")
 
     _add_heading(doc, "1. Introduction & Methodology", 2)
     _add_para(doc, FRAMEWORK_DESCRIPTIONS["BCG"])
     _add_para(doc, (
-        "This analysis uses FLC's internal BCG presentation data, which maps 22 academic departments "
-        "on two axes: (1) the department's share of total Student Credit Hours (SCH) in 2023-24, "
-        "representing relative market share, and (2) the 2-year percentage change in SCH, representing "
-        "growth rate. The intersection of these dimensions creates four strategic quadrants."
-    ))
-    _add_para(doc, (
-        "Important terminology note: The traditional BCG framework labels the low-growth/low-share "
-        "quadrant as 'Dogs.' Fort Lewis College uses the term 'Concerns' to describe these programs, "
-        "reflecting the need for careful review rather than automatic elimination."
+        "This analysis examines FLC's portfolio at two levels. The department-level view (22 departments) "
+        "uses % of total Student Credit Hours (SCH) as the market share proxy, providing a revenue-oriented "
+        "perspective. The major-level view (48 majors) uses 2024 enrollment headcount vs. 2022\u20132024 "
+        "percentage change, with bubble size reflecting absolute students gained or lost."
     ))
 
-    _add_heading(doc, "2. Quadrant Analysis", 2)
-    quadrants = {
-        "Stars (High Share, Growing)": "Star",
-        "Cash Cows (High Share, Declining)": "Cash Cow",
-        "Question Marks (Low Share, Growing)": "Question Mark",
-        "Concerns (Low Share, Declining)": "Concern",
-    }
-    for label, q in quadrants.items():
-        depts = BCG_DATA[BCG_DATA["Quadrant"] == q]
-        _add_heading(doc, f"{label}: {len(depts)} departments", 3)
+    # ── Department-Level Analysis ──
+    _add_heading(doc, "2. Department-Level Analysis (SCH-Based)", 2)
+    _add_para(doc, (
+        "The department-level BCG matrix plots 22 departments by their share of total Student Credit "
+        "Hours (X-axis) against 2-year enrollment change (Y-axis). The SCH divider is 4.0%, separating "
+        "departments that generate a meaningful share of institutional teaching revenue from those that do not."
+    ))
+    dept_quadrants = {"Star": "Stars", "Cash Cow": "Cash Cows",
+                      "Question Mark": "Question Marks", "Concern": "Concerns"}
+    for q_key, q_label in dept_quadrants.items():
+        depts = BCG_DEPT_DATA[BCG_DEPT_DATA["Quadrant"] == q_key]
+        _add_heading(doc, f"{q_label} ({len(depts)} departments)", 3)
         for _, row in depts.iterrows():
             doc.add_paragraph(
                 f"{row['Department']}: {row['SCH_Pct']}% of SCH, {row['Two_Year_Change']:+.1f}% 2-year change",
                 style="List Bullet"
             )
+    _add_para(doc, "Department-Level Insights:", bold=True, size=10)
+    for insight in BCG_DEPT_INSIGHTS:
+        doc.add_paragraph(insight, style="List Bullet")
 
-    _add_heading(doc, "3. Key Findings", 2)
+    # ── Major-Level Analysis ──
+    _add_heading(doc, "3. Major-Level Analysis (Enrollment-Based)", 2)
+    _add_para(doc, (
+        "The major-level view maps 48 individual majors using 2024 enrollment headcount "
+        "as the market share proxy and 2022\u20132024 percentage change as the growth rate. "
+        "Programs with fewer than 20 students in 2022 are flagged as 'small base' because their "
+        "percentage changes can be misleading (e.g., Music: 12 to 27 = +125% from just 15 students)."
+    ))
+    _add_heading(doc, "Major-Level Quadrant Analysis", 3)
+    quadrants = {
+        "Stars (Large & Growing)": "Star",
+        "Cash Cows (Large & Declining)": "Cash Cow",
+        "Question Marks (Small & Growing)": "Question Mark",
+        "Concerns (Small & Declining)": "Concern",
+    }
+    for label, q in quadrants.items():
+        progs = BCG_DATA[BCG_DATA["Quadrant"] == q].sort_values("Enrollment_2024", ascending=False)
+        _add_heading(doc, f"{label}: {len(progs)} majors", 3)
+        for _, row in progs.head(10).iterrows():
+            flag = " [small base]" if row["Small_Base"] else ""
+            doc.add_paragraph(
+                f"{row['Major']}: {int(row['Enrollment_2024'])} enrolled, "
+                f"{row['Pct_Change']:+.1f}% change ({int(row['Abs_Change']):+d} students){flag}",
+                style="List Bullet"
+            )
+        if len(progs) > 10:
+            doc.add_paragraph(f"... and {len(progs) - 10} additional majors", style="List Bullet")
+
+    _add_heading(doc, "4. Major-Level Key Findings", 2)
     for insight in BCG_INSIGHTS:
         doc.add_paragraph(insight, style="List Bullet")
 
-    _add_heading(doc, "4. Portfolio Health Assessment", 2)
+    _add_heading(doc, "5. Portfolio Health Assessment", 2)
+    counts = BCG_DATA["Quadrant"].value_counts()
+    total = len(BCG_DATA)
     _add_para(doc, (
-        "FLC's academic portfolio shows a concerning imbalance: only 2 of 22 departments (9%) are "
-        "Stars, while 9 departments (41%) fall in the Concern quadrant. The 9 Cash Cow departments "
-        "represent the institutional backbone, generating the majority of SCH, but their declining "
-        "trajectory requires attention. The 2 Question Marks (Accounting and History) present "
-        "intriguing growth signals that merit further investigation."
+        f"FLC's academic portfolio of {total} majors shows the following distribution: "
+        f"{counts.get('Star', 0)} Stars ({counts.get('Star', 0)*100//total}%), "
+        f"{counts.get('Cash Cow', 0)} Cash Cows ({counts.get('Cash Cow', 0)*100//total}%), "
+        f"{counts.get('Question Mark', 0)} Question Marks ({counts.get('Question Mark', 0)*100//total}%), "
+        f"and {counts.get('Concern', 0)} Concerns ({counts.get('Concern', 0)*100//total}%). "
+        f"Overall enrollment declined 3.1% from 2,899 to 2,810 between 2022 and 2024."
     ))
     _add_para(doc, (
-        "The heavy concentration in the Concern quadrant is particularly notable. However, several "
-        "Concern programs (Anthropology, Philosophy, Environment & Sustainability) contribute to "
-        "FLC's liberal arts mission and general education requirements. Strategic review should "
-        "balance market metrics with mission contribution and interdisciplinary value."
+        "The Concern quadrant contains many small programs. However, some (e.g., Philosophy, "
+        "Native American & Indigenous Studies) contribute to FLC's liberal arts mission and "
+        "general education requirements. NAIS is mission-critical and must not be evaluated "
+        "solely on enrollment metrics. Strategic review should balance market data with mission "
+        "contribution and interdisciplinary value."
     ))
 
-    _add_heading(doc, "5. Investment Recommendations", 2)
+    _add_heading(doc, "6. Investment Recommendations", 2)
     recommendations = [
-        "Stars: Invest to accelerate growth. Add capacity, online options, and graduate-level offerings in Business Admin and Psychology.",
-        "Cash Cows: Optimize for efficiency. Protect SCH generation while reducing per-student costs through class size optimization and cross-listing.",
-        "Question Marks: Evaluate selectively. Accounting's 12% growth warrants investment; History's 3% growth needs demand validation.",
-        "Concerns: Conduct structured program review. Differentiate between mission-critical programs needing restructuring vs. programs for potential phase-out.",
-        "Cross-cutting: Explore interdisciplinary combinations that can revitalize Concern programs by linking them to Star or Cash Cow departments.",
+        "Stars: Invest to sustain growth. Business Administration, Exercise Physiology, and "
+        "Environmental Conservation & Mgmt lead the portfolio. Protect capacity and expand pathways.",
+        "Cash Cows: Optimize for efficiency. Psychology and Biology/CMB maintain large enrollments "
+        "but face declining trajectories. Focus on retention and right-sizing.",
+        "Question Marks: Evaluate growth sustainability. Anthropology and Music show dramatic "
+        "growth but from small bases. Validate whether trends are durable before major investment.",
+        "Concerns: Conduct structured program review. Differentiate mission-critical programs "
+        "(e.g., NAIS) from those that may benefit from consolidation or interdisciplinary pairing.",
+        "Small-base caution: 12 programs had fewer than 20 students in 2022. Percentage changes "
+        "for these programs should be interpreted with care.",
     ]
     for rec in recommendations:
         doc.add_paragraph(rec, style="List Bullet")
 
-    _add_para(doc, "\nSource: FLC BCG Presentation, BCG-growthMatrixDepts.png, "
-              "FLC Institutional Data (23-24 SCH)", size=9)
+    _add_para(doc, "\nSource: Dataset_Majors.xlsx, FLC Institutional Data (2022\u20132024)", size=9)
 
     path = os.path.join(OUTPUT_DIR, "BCG_Executive_Summary.docx")
     doc.save(path)
@@ -498,37 +537,58 @@ def generate_bcg_docx():
 def generate_bcg_pptx():
     prs = Presentation()
     _pptx_title_slide(prs, "BCG Growth-Share Matrix",
-                       "Department Portfolio Analysis\nFort Lewis College")
+                       "Department & Major-Level Portfolio Analysis\nFort Lewis College")
 
     _pptx_content_slide(prs, "Methodology", [
         FRAMEWORK_DESCRIPTIONS["BCG"],
-        "X-axis: % of Total SCH (23-24) = Market Share",
-        "Y-axis: 2-Year Change % = Growth Rate",
-        "Note: 'Concerns' used instead of 'Dogs' per FLC preference",
-        "Source: BCG Presentation.pptx, BCG-growthMatrixDepts.png",
+        "Department view: X = % of Total SCH, Y = 2-Year Change % (22 departments)",
+        "Major view: X = 2024 Enrollment, Y = % Change 2022\u20132024 (48 majors)",
+        "Bubble size (major view): Absolute enrollment change (students gained/lost)",
+        "Small-base flag: Programs with < 20 students in 2022",
     ])
 
-    for label, q in [("Stars", "Star"), ("Cash Cows", "Cash Cow"),
-                      ("Question Marks", "Question Mark"), ("Concerns", "Concern")]:
-        depts = BCG_DATA[BCG_DATA["Quadrant"] == q]
-        bullets = [f"{len(depts)} departments in this quadrant"]
-        for _, row in depts.iterrows():
-            bullets.append(f"{row['Department']}: {row['SCH_Pct']}% SCH, {row['Two_Year_Change']:+.1f}%")
-        _pptx_content_slide(prs, label, bullets[:7])
+    # Department-level slides
+    dept_counts = BCG_DEPT_DATA["Quadrant"].value_counts()
+    _pptx_content_slide(prs, "Department-Level BCG (SCH-Based)", [
+        f"Stars: {dept_counts.get('Star', 0)} departments (Business Admin, Psychology)",
+        f"Cash Cows: {dept_counts.get('Cash Cow', 0)} departments (English, Math, Biology, HHP, Sociology, etc.)",
+        f"Question Marks: {dept_counts.get('Question Mark', 0)} departments (Accounting, History)",
+        f"Concerns: {dept_counts.get('Concern', 0)} departments (Political Science, Economics, Art & Design, etc.)",
+        "Cash Cows generate bulk of institutional SCH but all show 2-year declines",
+        "Source: BCG Presentation.pptx (FLC Internal)",
+    ])
 
+    # Major-level slides
+
+    for label, q in [("Stars \u2014 Large & Growing", "Star"),
+                      ("Cash Cows \u2014 Large & Declining", "Cash Cow"),
+                      ("Question Marks \u2014 Small & Growing", "Question Mark"),
+                      ("Concerns \u2014 Small & Declining", "Concern")]:
+        progs = BCG_DATA[BCG_DATA["Quadrant"] == q].sort_values("Enrollment_2024", ascending=False)
+        bullets = [f"{len(progs)} majors in this quadrant"]
+        for _, row in progs.head(6).iterrows():
+            flag = " *" if row["Small_Base"] else ""
+            bullets.append(
+                f"{row['Major']}: {int(row['Enrollment_2024'])} enrolled, "
+                f"{row['Pct_Change']:+.1f}% ({int(row['Abs_Change']):+d}){flag}"
+            )
+        _pptx_content_slide(prs, label, bullets)
+
+    counts = BCG_DATA["Quadrant"].value_counts()
     _pptx_content_slide(prs, "Portfolio Health", [
-        "2 Stars (9%), 9 Cash Cows (41%), 2 Question Marks (9%), 9 Concerns (41%)",
-        "Concerning imbalance: 41% of departments in Concern quadrant",
-        "Cash Cows provide stable SCH but face declining trajectories",
-        "Mission-critical Concern programs need restructuring, not elimination",
+        f"{counts.get('Star', 0)} Stars, {counts.get('Cash Cow', 0)} Cash Cows, "
+        f"{counts.get('Question Mark', 0)} Question Marks, {counts.get('Concern', 0)} Concerns",
+        "Overall enrollment declined 3.1% (2,899 \u2192 2,810) from 2022 to 2024",
+        "12 programs flagged as small base (< 20 students in 2022)",
+        "Mission-critical programs (e.g., NAIS) must not be evaluated on enrollment alone",
     ])
 
     _pptx_content_slide(prs, "Investment Recommendations", [
-        "Stars: Invest to accelerate (online, graduate tracks)",
-        "Cash Cows: Optimize efficiency, protect SCH generation",
-        "Question Marks: Evaluate selectively (Accounting promising)",
-        "Concerns: Structured review; differentiate mission-critical vs. phase-out",
-        "Explore interdisciplinary combinations for Concern programs",
+        "Stars: Invest to sustain \u2014 Business Admin, Exercise Physiology, Env Conservation lead",
+        "Cash Cows: Optimize efficiency \u2014 Psychology, Biology/CMB need retention focus",
+        "Question Marks: Validate growth sustainability before major investment",
+        "Concerns: Structured review; protect mission-critical programs",
+        "Small-base caution: Interpret percentage changes for tiny programs with care",
     ])
 
     path = os.path.join(OUTPUT_DIR, "BCG_Slide_Deck.pptx")
@@ -672,6 +732,552 @@ def generate_swot_pptx():
 
 
 # ============================================================================
+# PROJECT-LEVEL SYNTHESIS DOCUMENTS
+# ============================================================================
+
+def _bcg_quadrant_counts():
+    """Return dict of quadrant label -> count."""
+    counts = BCG_DATA["Quadrant"].value_counts().to_dict()
+    return {
+        "Stars": counts.get("Star", 0),
+        "Cash Cows": counts.get("Cash Cow", 0),
+        "Question Marks": counts.get("Question Mark", 0),
+        "Concerns": counts.get("Concern", 0),
+    }
+
+
+def _gray_rec_counts():
+    """Return dict of recommendation -> count."""
+    return GRAY_ASSOCIATES_DATA["GA_Recommendation"].value_counts().to_dict()
+
+
+def _write_exec_summary_content(doc):
+    """Shared executive summary narrative used by both the standalone and the final report."""
+    bcg_counts = _bcg_quadrant_counts()
+    gray_counts = _gray_rec_counts()
+
+    # Project Overview
+    _add_heading(doc, "Project Overview", 2)
+    _add_para(doc, (
+        f"The Fort Lewis College Portfolio Optimization Project is a comprehensive strategic analysis "
+        f"of FLC's academic portfolio, designed to inform the 2025\u20132030 planning cycle. "
+        f"FLC enrolls {INSTITUTION['total_enrollment_f25']:,} students in Durango, Colorado, with a "
+        f"{INSTITUTION['retention_rate_f24']}% first-time full-time retention rate. As a small, public, "
+        f"rural institution with a Native American\u2013serving mission, FLC faces unique competitive "
+        f"pressures alongside distinctive strengths."
+    ))
+    _add_para(doc, (
+        "The project applies a three-phase methodology: Phase 1 (Environmental Scanning) uses four "
+        "frameworks\u2014PESTLE, Porter's Five Forces, BCG Growth-Share Matrix, and Gray Associates "
+        "Portfolio Analysis\u2014to assess external conditions and internal portfolio health. Phase 2 "
+        "(Strategic Synthesis) consolidates findings into a SWOT analysis. Phase 3 (Strategic Direction) "
+        "applies the Zone to Win framework to produce three actionable scenarios with a strategic roadmap."
+    ))
+
+    # Environmental Scanning
+    _add_heading(doc, "Environmental Scanning Findings", 2)
+    # PESTLE
+    _add_heading(doc, "PESTLE Analysis", 3)
+    top_pestle = sorted(PESTLE_DATA.items(), key=lambda x: x[1]["impact_score"], reverse=True)[:3]
+    pestle_summary = ", ".join([f"{cat} ({d['impact_score']}/5)" for cat, d in top_pestle])
+    _add_para(doc, (
+        f"The PESTLE analysis assessed six external dimensions. Highest-impact categories: {pestle_summary}. "
+        f"Federal DEI policy disruption threatens TRIO programs (120+ terminated nationally) and could "
+        f"misclassify FLC's statutory NATW mission. State funding is projected down for FY2026. "
+        f"The Durango housing crisis constrains faculty/staff recruitment. Online market is saturated\u2014"
+        f"FLC's only defensible online strategy is the Indigenous niche (NATW tuition waiver moat)."
+    ))
+
+    # Porter's
+    _add_heading(doc, "Porter's Five Forces", 3)
+    avg_score = sum(d["score"] for d in PORTERS_DATA.values()) / len(PORTERS_DATA)
+    _add_para(doc, (
+        f"Overall competitive intensity is HIGH ({avg_score:.1f}/5 average across five forces). "
+        f"Competitive rivalry ({PORTERS_DATA['Competitive Rivalry']['score']}/5) and student bargaining "
+        f"power ({PORTERS_DATA['Bargaining Power of Students']['score']}/5) are the strongest pressures. "
+        f"FLC's defensive moats include its Native American tuition waiver, Durango's outdoor lifestyle, "
+        f"and an intimate small-college experience."
+    ))
+
+    # BCG
+    _add_heading(doc, "BCG Growth-Share Matrix", 3)
+    _total_bcg = sum(bcg_counts.values())
+    _dept_counts = BCG_DEPT_DATA["Quadrant"].value_counts()
+    _add_para(doc, (
+        f"The BCG analysis examines FLC at two levels. At the department level (SCH-based), 22 departments "
+        f"show {_dept_counts.get('Star', 0)} Stars, {_dept_counts.get('Cash Cow', 0)} Cash Cows, "
+        f"and {_dept_counts.get('Concern', 0)} Concerns \u2014 Cash Cows generate bulk revenue but all "
+        f"face declining enrollment. At the major level (enrollment-based), {_total_bcg} majors show "
+        f"{bcg_counts['Stars']} Stars, {bcg_counts['Cash Cows']} Cash Cows, "
+        f"{bcg_counts['Question Marks']} Question Marks, and {bcg_counts['Concerns']} Concerns. "
+        f"Programs with fewer than 20 students in 2022 are flagged as small-base."
+    ))
+
+    # Gray
+    _add_heading(doc, "Gray Associates Portfolio Analysis", 3)
+    rec_str = ", ".join([f"{count} {rec}" for rec, count in sorted(gray_counts.items(),
+                         key=lambda x: ["Grow", "Sustain", "Transform", "Evaluate", "Sunset Review"].index(x[0]))])
+    _add_para(doc, (
+        f"The Gray Associates framework evaluated 23 degree programs on Market Score and Economics Score "
+        f"(note: applied with proxy data; scores are directional, not definitive): "
+        f"{rec_str}. Programs recommended to Grow (Engineering, Health Sciences, Business, Psychology) "
+        f"align with strong employment demand and student interest."
+    ))
+
+    # SWOT
+    _add_heading(doc, "Strategic Synthesis (SWOT)", 2)
+    swot_counts = {q: len(d["items"]) for q, d in SWOT_DATA.items()}
+    _add_para(doc, (
+        f"The SWOT analysis synthesized all Phase 1 findings: {swot_counts['Strengths']} Strengths, "
+        f"{swot_counts['Weaknesses']} Weaknesses, {swot_counts['Opportunities']} Opportunities, "
+        f"and {swot_counts['Threats']} Threats. Top strengths: statutory NATW mission (CRS 23-52-105) "
+        f"and 15 Star-quadrant majors. Critical tension reconciled: Indigenous education represents "
+        f"FLC's best growth opportunity but must be framed through statutory obligations (CRS 23-52-105), not DEI language, "
+        f"given current federal policy climate."
+    ))
+
+    # Zone to Win + Scenarios
+    _add_heading(doc, "Strategic Direction: Zone to Win", 2)
+    _add_para(doc, (
+        "The Zone to Win framework (Geoffrey Moore) is the culminating analytical step, translating "
+        "all prior findings into four strategic investment zones\u2014Performance, Productivity, "
+        "Incubation, and Transformation\u2014across three scenarios."
+    ))
+    for zone, zd in ZONE_TO_WIN_DATA.items():
+        _add_para(doc, f"{zone}: {zd['description']}", bold=True, size=10)
+
+    _add_heading(doc, "Three Strategic Scenarios", 3)
+    for name, sd in SCENARIOS.items():
+        _add_para(doc, f"{name} Scenario", bold=True, size=11)
+        _add_para(doc, (
+            f"{sd['description']} Enrollment target: {sd['enrollment_target']:,}. "
+            f"Retention target: {sd['retention_target']}%. "
+            f"Zone allocation: Performance {sd['zone_allocation']['Performance']}%, "
+            f"Productivity {sd['zone_allocation']['Productivity']}%, "
+            f"Incubation {sd['zone_allocation']['Incubation']}%, "
+            f"Transformation {sd['zone_allocation']['Transformation']}%."
+        ))
+
+    # Recommendations
+    _add_heading(doc, "Recommendations", 2)
+    recommendations = [
+        "Invest in Star-quadrant majors (Business Admin, Exercise Physiology, Psychology, Engineering) with capacity and pipeline growth",
+        "Initiate structured review of 17 Concern-quadrant majors, balancing enrollment data with mission alignment (protect NAIS regardless)",
+        "Prioritize retention improvement as most cost-effective enrollment strategy (Compass expansion, early-alert, advising redesign)",
+        "Pursue Indigenous education as a defensible national niche\u2014frame through statutory/sovereign obligations, not DEI; invest in marketing for NATW online recruitment",
+        "Strengthen dual enrollment and transfer pipeline as a near-term enrollment stabilizer (3+ high school partnerships)",
+        "Address Durango housing crisis impact on faculty/staff recruitment through institutional housing partnerships",
+        "Navigate faculty governance deliberately\u2014accept 12-18 month timelines for program restructuring; build evidence base with BCG and Gray data",
+    ]
+    for rec in recommendations:
+        doc.add_paragraph(rec, style="List Bullet")
+
+
+def generate_exec_summary_docx():
+    """Generate 3-4 page narrative executive summary pulling from all frameworks."""
+    doc = Document()
+    _doc_header(doc, "Executive Summary",
+                "FLC Portfolio Optimization Project \u2014 Strategic Analysis & Recommendations")
+
+    _write_exec_summary_content(doc)
+
+    _add_para(doc, "\nSource: FLC Portfolio Optimization Project \u2014 PESTLE, Porter's, BCG, "
+              "Gray Associates, SWOT, and Zone to Win analyses", size=9)
+
+    path = os.path.join(OUTPUT_DIR, "Executive_Summary_Narrative.docx")
+    doc.save(path)
+    return path
+
+
+def generate_exec_summary_pptx():
+    """Generate 5-8 slide executive summary deck with high points from all frameworks."""
+    prs = Presentation()
+    bcg_counts = _bcg_quadrant_counts()
+    gray_counts = _gray_rec_counts()
+    _dept_counts = BCG_DEPT_DATA["Quadrant"].value_counts()
+
+    _pptx_title_slide(prs, "FLC Portfolio Optimization Project",
+                       "Executive Summary\nFort Lewis College Academic Affairs")
+
+    # Slide 2: Project At-A-Glance
+    _pptx_content_slide(prs, "Project At-A-Glance", [
+        f"Enrollment: {INSTITUTION['total_enrollment_f25']:,} students (Fall 2025)",
+        f"Retention: {INSTITUTION['retention_rate_f24']}% FTFT (Fall 2024)",
+        "Graduate Students: 160 (1 existing program, Fall 2025)",
+        "BCG: 22 departments (SCH-based) + 48 majors (enrollment-based); Gray: 23 programs",
+        "3-Phase Methodology: Environmental Scanning \u2192 SWOT Synthesis \u2192 Zone to Win Scenarios",
+    ])
+
+    # Slide 3: Phase 1 Key Findings
+    top_pestle = sorted(PESTLE_DATA.items(), key=lambda x: x[1]["impact_score"], reverse=True)[:3]
+    pestle_line = ", ".join([f"{cat} ({d['impact_score']}/5)" for cat, d in top_pestle])
+    avg_porters = sum(d["score"] for d in PORTERS_DATA.values()) / len(PORTERS_DATA)
+    _pptx_content_slide(prs, "Phase 1: Environmental Scanning", [
+        f"PESTLE: Top impacts \u2014 {pestle_line}",
+        f"Porter's: Overall competitive intensity {avg_porters:.1f}/5 (HIGH)",
+        f"BCG: Depts \u2014 {_dept_counts.get('Star', 0)} Stars, {_dept_counts.get('Cash Cow', 0)} Cash Cows, {_dept_counts.get('Concern', 0)} Concerns; "
+        f"Majors \u2014 {bcg_counts['Stars']} Stars, {bcg_counts['Concerns']} Concerns",
+        f"Gray: {gray_counts.get('Grow', 0)} Grow, {gray_counts.get('Sustain', 0)} Sustain, "
+        f"{gray_counts.get('Transform', 0)} Transform, {gray_counts.get('Evaluate', 0)} Evaluate, "
+        f"{gray_counts.get('Sunset Review', 0)} Sunset Review",
+    ])
+
+    # Slide 4: SWOT Highlights
+    swot_bullets = []
+    for quadrant in ["Strengths", "Weaknesses", "Opportunities", "Threats"]:
+        items = SWOT_DATA[quadrant]["items"][:2]
+        titles = " | ".join([it["title"] for it in items])
+        swot_bullets.append(f"{quadrant}: {titles}")
+    _pptx_content_slide(prs, "Phase 2: SWOT Synthesis", swot_bullets)
+
+    # Slide 5: Zone to Win
+    zone_bullets = []
+    for zone, zd in ZONE_TO_WIN_DATA.items():
+        zone_bullets.append(f"{zone}: {len(zd['programs'])} initiatives \u2014 {zd['programs'][0]['name']}, {zd['programs'][1]['name']}")
+    _pptx_content_slide(prs, "Phase 3: Zone to Win Framework", zone_bullets)
+
+    # Slide 6: Scenarios
+    scenario_bullets = []
+    for name, sd in SCENARIOS.items():
+        scenario_bullets.append(
+            f"{name}: Enrollment {sd['enrollment_target']:,}, Retention {sd['retention_target']}%, "
+            f"{sd['new_programs']} new programs"
+        )
+    _pptx_content_slide(prs, "Three Strategic Scenarios", scenario_bullets)
+
+    # Slide 7: Recommendations
+    _pptx_content_slide(prs, "Key Recommendations", [
+        "Invest in Star majors: Business Admin, Exercise Physiology, Psychology, Engineering",
+        "Initiate structured review of 17 Concern-quadrant majors (protect NAIS regardless)",
+        "Prioritize retention as most cost-effective enrollment strategy (Compass, advising, early-alert)",
+        "Pursue Indigenous online niche (statutorily grounded, NATW moat) \u2014 not generic online degrees",
+        "Strengthen dual enrollment (3+ schools) and transfer pipelines",
+        "Address Durango housing barrier to faculty/staff recruitment",
+    ])
+
+    path = os.path.join(OUTPUT_DIR, "Executive_Summary_Deck.pptx")
+    prs.save(path)
+    return path
+
+
+def generate_final_report_docx():
+    """Generate ~8-10 page final report with Executive Summary, Analysis, Risk, and Summary sections."""
+    doc = Document()
+    _doc_header(doc, "Final Report",
+                "FLC Portfolio Optimization Project \u2014 Comprehensive Strategic Analysis")
+
+    # ── SECTION 1: EXECUTIVE SUMMARY (2 pages) ──
+    _add_heading(doc, "Section 1: Executive Summary", 1)
+    _write_exec_summary_content(doc)
+
+    # ── SECTION 2: ANALYSIS (4-6 pages) ──
+    _add_heading(doc, "Section 2: Detailed Analysis", 1)
+    _add_para(doc, (
+        "This section presents 3\u20135 major takeaways from each Phase 1 framework and the "
+        "Phase 2 SWOT synthesis. Zone to Win is excluded here as it is the culminating "
+        "framework covered in the Executive Summary."
+    ))
+
+    # PESTLE
+    _add_heading(doc, "PESTLE Analysis", 2)
+    sorted_pestle = sorted(PESTLE_DATA.items(), key=lambda x: x[1]["impact_score"], reverse=True)
+    for cat, d in sorted_pestle:
+        _add_heading(doc, f"{cat} \u2014 Impact: {d['impact']} ({d['impact_score']}/5), Trend: {d['trend']}", 3)
+        for factor in d["factors"][:3]:
+            doc.add_paragraph(factor, style="List Bullet")
+        if d["opportunities"]:
+            doc.add_paragraph(f"Opportunity: {d['opportunities'][0]}", style="List Bullet 2")
+
+    # Porter's
+    _add_heading(doc, "Porter's Five Forces", 2)
+    for force, d in PORTERS_DATA.items():
+        _add_heading(doc, f"{force}: {d['rating']} ({d['score']}/5)", 3)
+        _add_para(doc, d["description"])
+        for ind in d["indicators"][:3]:
+            doc.add_paragraph(
+                f"{ind['name']}: {ind['value']} (Trend: {ind['trend']})",
+                style="List Bullet"
+            )
+    _add_para(doc, "Key Takeaways:", bold=True, size=10)
+    for insight in PORTERS_INSIGHTS:
+        doc.add_paragraph(insight, style="List Bullet")
+
+    # BCG
+    _add_heading(doc, "BCG Growth-Share Matrix", 2)
+    _add_para(doc, (
+        "The BCG analysis examines FLC's portfolio at two levels: 22 departments (SCH share as market "
+        "share proxy) and 48 individual majors (2024 enrollment headcount vs. 2022\u20132024 % change)."
+    ))
+
+    # Department-level
+    _add_heading(doc, "Department-Level Analysis (SCH-Based)", 3)
+    dept_quadrant_labels = {"Star": "Stars", "Cash Cow": "Cash Cows",
+                            "Question Mark": "Question Marks", "Concern": "Concerns"}
+    for q_key, q_label in dept_quadrant_labels.items():
+        depts = BCG_DEPT_DATA[BCG_DEPT_DATA["Quadrant"] == q_key]
+        _add_para(doc, f"{q_label} ({len(depts)} departments):", bold=True, size=10)
+        for _, row in depts.iterrows():
+            doc.add_paragraph(
+                f"{row['Department']}: {row['SCH_Pct']}% of SCH, {row['Two_Year_Change']:+.1f}% 2-year change",
+                style="List Bullet"
+            )
+
+    # Major-level
+    _add_heading(doc, "Major-Level Analysis (Enrollment-Based)", 3)
+    bcg_counts = _bcg_quadrant_counts()
+    quadrant_labels = {"Star": "Stars", "Cash Cow": "Cash Cows",
+                       "Question Mark": "Question Marks", "Concern": "Concerns"}
+    for q_key, q_label in quadrant_labels.items():
+        majors = BCG_DATA[BCG_DATA["Quadrant"] == q_key]
+        _add_para(doc, f"{q_label} ({len(majors)} majors):", bold=True, size=10)
+        for _, row in majors.head(8).iterrows():
+            flag = " [Small Base]" if row["Small_Base"] else ""
+            doc.add_paragraph(
+                f"{row['Major']}: {row['Enrollment_2024']} students, {row['Pct_Change']:+.1f}% change{flag}",
+                style="List Bullet"
+            )
+        if len(majors) > 8:
+            doc.add_paragraph(f"... and {len(majors) - 8} additional majors", style="List Bullet")
+    _add_para(doc, "Key Takeaways:", bold=True, size=10)
+    for insight in BCG_INSIGHTS:
+        doc.add_paragraph(insight, style="List Bullet")
+
+    # Gray Associates
+    _add_heading(doc, "Gray Associates Portfolio Analysis", 2)
+    gray_counts = _gray_rec_counts()
+    for rec in ["Grow", "Sustain", "Transform", "Evaluate", "Sunset Review"]:
+        progs = GRAY_ASSOCIATES_DATA[GRAY_ASSOCIATES_DATA["GA_Recommendation"] == rec]
+        if not progs.empty:
+            _add_heading(doc, f"{rec} ({len(progs)} programs)", 3)
+            for _, p in progs.head(5).iterrows():
+                doc.add_paragraph(
+                    f"{p['Program']}: Market {p['Market_Score']}, Economics {p['Economics_Score']}, "
+                    f"Enrollment {p['Enrollment']}",
+                    style="List Bullet"
+                )
+    _add_para(doc, "Key Takeaways:", bold=True, size=10)
+    for insight in GA_INSIGHTS:
+        doc.add_paragraph(insight, style="List Bullet")
+
+    # SWOT
+    _add_heading(doc, "SWOT Synthesis", 2)
+    for quadrant in ["Strengths", "Weaknesses", "Opportunities", "Threats"]:
+        items = SWOT_DATA[quadrant]["items"]
+        _add_heading(doc, f"{quadrant} ({len(items)} items)", 3)
+        for item in items[:4]:
+            doc.add_paragraph(f"{item['title']}: {item['detail']}", style="List Bullet")
+
+    # ── SECTION 3: RISK AND IMPLEMENTATION (1/2 page) ──
+    _add_heading(doc, "Section 3: Risk & Implementation", 1)
+    _add_para(doc, (
+        f"The strategic roadmap includes {len(ROADMAP_MILESTONES)} milestones tracked across "
+        f"all three phases, with {len(ROADMAP_KPIS)} key performance indicators measuring progress. "
+        f"Below are the highest-priority risks and mitigation strategies."
+    ))
+    # Risk table
+    table = doc.add_table(rows=1, cols=4)
+    table.style = "Light Grid Accent 1"
+    hdr = table.rows[0].cells
+    hdr[0].text = "Risk"
+    hdr[1].text = "Probability"
+    hdr[2].text = "Impact"
+    hdr[3].text = "Mitigation Strategy"
+    for _, row in RISK_MITIGATION.head(6).iterrows():
+        cells = table.add_row().cells
+        cells[0].text = row["Risk"]
+        cells[1].text = row["Probability"]
+        cells[2].text = row["Impact"]
+        cells[3].text = row["Mitigation_Strategy"]
+
+    # ── SECTION 4: SUMMARY (1 page) ──
+    _add_heading(doc, "Section 4: Summary", 1)
+    _add_para(doc, (
+        "Fort Lewis College operates in an increasingly competitive and financially constrained "
+        "higher education environment. Declining college-going rates, intensifying online competition, "
+        "state funding volatility, and political pressure on diversity programs create significant "
+        "headwinds. At the same time, FLC possesses distinctive strengths that few competitors can "
+        "replicate: a federally rooted Native American tuition waiver, an unmatched outdoor recreation "
+        "setting in Durango, and an intimate small-college experience."
+    ))
+    _add_para(doc, (
+        "The analysis reveals a portfolio in need of strategic rebalancing. Of 48 majors analyzed, "
+        "17 fall in the BCG Concern quadrant while 15 are Stars, indicating both risk and opportunity. "
+        "The Gray Associates framework identifies programs for growth investment, sustaining, and those "
+        "requiring transformation, evaluation, or sunset review."
+    ))
+    _add_para(doc, (
+        "The Zone to Win framework provides the decision architecture for action. Three qualitatively "
+        "different scenarios (Incremental, Moderate-Adaptive, Disruptive) define distinct strategic bets "
+        "rather than simply varying the degree of investment. Consistent priorities across all scenarios: "
+        "invest in proven Star programs, improve retention through advising and early-alert systems, "
+        "differentiate through Indigenous education (statutorily grounded, not DEI), and leverage FLC's unique "
+        "place-based and experiential learning assets."
+    ))
+    _add_para(doc, (
+        "Success requires navigating faculty governance deliberately (12-18 month timelines), addressing "
+        "the Durango housing barrier to recruitment, investing marketing resources in the Indigenous "
+        "student niche (the only defensible online strategy), and maintaining honest assessment of what "
+        "is achievable within FLC's constrained budget."
+    ))
+
+    _add_para(doc, "\nSource: FLC Portfolio Optimization Project \u2014 All framework analyses, "
+              "institutional data, and strategic planning documents", size=9)
+
+    path = os.path.join(OUTPUT_DIR, "Final_Report.docx")
+    doc.save(path)
+    return path
+
+
+def generate_final_report_pptx():
+    """Generate max 20-slide final presentation leveraging Final Report content."""
+    prs = Presentation()
+    bcg_counts = _bcg_quadrant_counts()
+    gray_counts = _gray_rec_counts()
+    _dept_counts = BCG_DEPT_DATA["Quadrant"].value_counts()
+
+    # Slide 1: Title
+    _pptx_title_slide(prs, "FLC Portfolio Optimization",
+                       "Final Presentation\nFort Lewis College Academic Affairs")
+
+    # Slide 2: Agenda
+    _pptx_content_slide(prs, "Agenda", [
+        "Project Overview & Methodology",
+        "Phase 1: Environmental Scanning (PESTLE, Porter's, BCG, Gray Associates)",
+        "Phase 2: Strategic Synthesis (SWOT)",
+        "Phase 3: Strategic Direction (Zone to Win & Scenarios)",
+        "Risk & Implementation",
+        "Recommendations & Next Steps",
+    ])
+
+    # Slide 3: Project Overview
+    _pptx_content_slide(prs, "Project Overview", [
+        f"Fort Lewis College \u2014 {INSTITUTION['location']} | {INSTITUTION['type']}",
+        f"Enrollment: {INSTITUTION['total_enrollment_f25']:,} | Retention: {INSTITUTION['retention_rate_f24']}%",
+        "Native American\u2013serving mission with federally rooted tuition waiver",
+        "3-Phase methodology: Scanning \u2192 Synthesis \u2192 Direction",
+        "7 frameworks; BCG: 22 departments (SCH) + 48 majors (enrollment); Gray: 23 programs",
+    ])
+
+    # Slide 4: PESTLE Key Findings
+    sorted_pestle = sorted(PESTLE_DATA.items(), key=lambda x: x[1]["impact_score"], reverse=True)
+    pestle_bullets = []
+    for cat, d in sorted_pestle[:4]:
+        pestle_bullets.append(f"{cat}: {d['impact']} ({d['impact_score']}/5) \u2014 {d['factors'][0]}")
+    _pptx_content_slide(prs, "PESTLE: Key Findings", pestle_bullets)
+
+    # Slide 5: PESTLE Implications
+    pestle_opps = []
+    for cat, d in sorted_pestle[:4]:
+        if d["opportunities"]:
+            pestle_opps.append(f"{cat}: {d['opportunities'][0]}")
+    _pptx_content_slide(prs, "PESTLE: Opportunities", pestle_opps)
+
+    # Slide 6: Porter's Overview
+    porters_bullets = []
+    for force, d in PORTERS_DATA.items():
+        porters_bullets.append(f"{force}: {d['rating']} ({d['score']}/5)")
+    avg_porters = sum(d["score"] for d in PORTERS_DATA.values()) / len(PORTERS_DATA)
+    porters_bullets.append(f"Overall intensity: {avg_porters:.1f}/5 (HIGH)")
+    _pptx_content_slide(prs, "Porter's Five Forces", porters_bullets)
+
+    # Slide 7: Porter's Competitive Position
+    _pptx_content_slide(prs, "Porter's: Competitive Position", PORTERS_INSIGHTS[:5])
+
+    # Slide 8: BCG Department Summary
+    _pptx_content_slide(prs, "BCG: Department-Level (SCH-Based)", [
+        f"Stars: {_dept_counts.get('Star', 0)} departments (Business Admin, Psychology)",
+        f"Cash Cows: {_dept_counts.get('Cash Cow', 0)} departments (English, Math, Biology, HHP, etc.)",
+        f"Question Marks: {_dept_counts.get('Question Mark', 0)} departments (Accounting, History)",
+        f"Concerns: {_dept_counts.get('Concern', 0)} departments (Poli Sci, Economics, Art & Design, etc.)",
+        "Cash Cows generate bulk of institutional SCH but all show 2-year enrollment declines",
+    ])
+
+    # Slide 9: BCG Major Summary
+    _total_bcg = sum(bcg_counts.values())
+    _pptx_content_slide(prs, "BCG: Major-Level (Enrollment-Based)", [
+        f"Stars: {bcg_counts['Stars']} majors (above-median enrollment, positive growth)",
+        f"Cash Cows: {bcg_counts['Cash Cows']} majors (above-median enrollment, negative/flat growth)",
+        f"Question Marks: {bcg_counts['Question Marks']} majors (below-median enrollment, positive growth)",
+        f"Concerns: {bcg_counts['Concerns']} majors (below-median enrollment, negative/flat growth)",
+        f"Portfolio note: {bcg_counts['Concerns']*100//_total_bcg}% in Concern quadrant; small-base programs flagged",
+    ])
+
+    # Slide 10: BCG Insights
+    _pptx_content_slide(prs, "BCG: Key Takeaways", BCG_INSIGHTS[:5])
+
+    # Slide 10: Gray Overview
+    gray_bullets = []
+    for rec in ["Grow", "Sustain", "Transform", "Evaluate", "Sunset Review"]:
+        count = gray_counts.get(rec, 0)
+        progs = GRAY_ASSOCIATES_DATA[GRAY_ASSOCIATES_DATA["GA_Recommendation"] == rec]
+        top_names = ", ".join(progs["Program"].head(3).tolist())
+        gray_bullets.append(f"{rec} ({count}): {top_names}")
+    _pptx_content_slide(prs, "Gray Associates: Program Classifications", gray_bullets)
+
+    # Slide 11: Gray Insights
+    _pptx_content_slide(prs, "Gray Associates: Key Takeaways", GA_INSIGHTS[:5])
+
+    # Slide 12: SWOT Summary
+    swot_bullets = []
+    for quadrant in ["Strengths", "Weaknesses", "Opportunities", "Threats"]:
+        items = SWOT_DATA[quadrant]["items"][:2]
+        titles = ", ".join([it["title"] for it in items])
+        swot_bullets.append(f"{quadrant} ({len(SWOT_DATA[quadrant]['items'])}): {titles}")
+    _pptx_content_slide(prs, "SWOT Synthesis", swot_bullets)
+
+    # Slide 13: SWOT Strategic Themes
+    swot_themes = []
+    for quadrant in ["Strengths", "Weaknesses", "Opportunities", "Threats"]:
+        top = SWOT_DATA[quadrant]["items"][0]
+        swot_themes.append(f"{quadrant}: {top['title']} \u2014 {top['detail'][:80]}...")
+    _pptx_content_slide(prs, "SWOT: Strategic Themes", swot_themes)
+
+    # Slide 14: Zone to Win Framework
+    zone_bullets = []
+    for zone, zd in ZONE_TO_WIN_DATA.items():
+        zone_bullets.append(f"{zone} ({len(zd['programs'])} initiatives): {zd['description'][:80]}...")
+    _pptx_content_slide(prs, "Zone to Win Framework", zone_bullets)
+
+    # Slide 15: Zone to Win Programs
+    zone_prog_bullets = []
+    for zone, zd in ZONE_TO_WIN_DATA.items():
+        top = zd["programs"][:2]
+        names = ", ".join([p["name"] for p in top])
+        zone_prog_bullets.append(f"{zone}: {names}")
+    _pptx_content_slide(prs, "Zone to Win: Key Programs", zone_prog_bullets)
+
+    # Slide 16: Strategic Scenarios
+    scenario_bullets = []
+    for name, sd in SCENARIOS.items():
+        scenario_bullets.append(
+            f"{name}: Enrollment {sd['enrollment_target']:,}, Retention {sd['retention_target']}%, "
+            f"{sd['new_programs']} new programs"
+        )
+        scenario_bullets.append(f"  \u2192 {sd['description'][:80]}")
+    _pptx_content_slide(prs, "Three Strategic Scenarios", scenario_bullets)
+
+    # Slide 17: Risk & Implementation
+    risk_bullets = []
+    for _, row in RISK_MITIGATION.head(5).iterrows():
+        risk_bullets.append(f"{row['Risk']} ({row['Probability']}/{row['Impact']}): {row['Mitigation_Strategy'][:60]}...")
+    _pptx_content_slide(prs, "Risk & Implementation", risk_bullets)
+
+    # Slide 18: Recommendations
+    _pptx_content_slide(prs, "Key Recommendations", [
+        "Invest in Star majors (Business Admin, Exercise Physiology, Psychology, Engineering)",
+        "Initiate structured review of 17 Concern-quadrant majors (protect NAIS regardless)",
+        "Prioritize retention as most cost-effective enrollment strategy",
+        "Pursue Indigenous online niche (statutorily grounded, NATW moat) \u2014 not generic degrees",
+        "Strengthen dual enrollment (3+ schools) and transfer pipelines",
+        "Address Durango housing barrier; navigate faculty governance with 12-18 month timelines",
+    ])
+
+    path = os.path.join(OUTPUT_DIR, "Final_Presentation.pptx")
+    prs.save(path)
+    return path
+
+
+# ============================================================================
 # PUBLIC API
 # ============================================================================
 
@@ -685,6 +1291,10 @@ GENERATORS = {
     "bcg_docx": generate_bcg_docx,
     "bcg_pptx": generate_bcg_pptx,
     "swot_pptx": generate_swot_pptx,
+    "exec_summary_docx": generate_exec_summary_docx,
+    "exec_summary_pptx": generate_exec_summary_pptx,
+    "final_report_docx": generate_final_report_docx,
+    "final_report_pptx": generate_final_report_pptx,
 }
 
 

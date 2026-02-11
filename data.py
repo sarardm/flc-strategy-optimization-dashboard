@@ -97,10 +97,116 @@ DEGREES_AWARDED = pd.DataFrame({
 })
 
 # ============================================================================
-# BCG GROWTH-SHARE MATRIX  [INTERNAL - BCG-growthMatrixDepts.png]
+# BCG GROWTH-SHARE MATRIX  [INTERNAL - Dataset_Majors.xlsx percentChange tab]
 # ============================================================================
+# 48 majors with 2022 vs 2024 enrollment (Select Majors Combined).
+# Quadrants computed at module load: X = Enrollment_2024, Y = Pct_Change.
+# Small_Base flags programs with < 20 students in 2022 (% change unreliable).
 
-BCG_DATA = pd.DataFrame({
+_bcg_raw = pd.DataFrame({
+    "Major": [
+        "Accounting", "Adventure Education", "Anthropology",
+        "Art K-12 Education", "Biochemistry",
+        "Biology/Cellular & Molecular Biology", "Borders & Languages",
+        "Business Administration", "Chemistry",
+        "Communication Design", "Computer Engineering",
+        "Computer Information Systems", "Criminology & Justice Studies",
+        "Early Childhood Education", "Economics",
+        "Educational Studies", "Elementary Education",
+        "Engineering", "English", "English Secondary Education",
+        "Entrepreneurship & Small Business", "Environmental Conservation and Management",
+        "Environmental Science", "Environmental Studies",
+        "Exercise & Health Promotion", "Exercise Physiology",
+        "Exercise Science K-12 Education", "Gender & Sexuality Studies",
+        "Geology", "Health Sciences", "History",
+        "Journalism & Multimedia Studies", "Marketing",
+        "Mathematics", "Music",
+        "Native American & Indigenous Studies", "Nutrition",
+        "Philosophy", "Physics",
+        "Political Science", "Pre-Major Accounting",
+        "Psychology", "Public Health",
+        "Sociology and Human Services", "Sport Administration",
+        "Studio Art", "Theatre", "Writing",
+    ],
+    "Enrollment_2022": [
+        63, 69, 24, 15, 49, 193, 6,
+        295, 27, 71, 65, 68, 101,
+        7, 38, 7, 18,
+        196, 21, 19,
+        49, 82, 100, 54,
+        35, 137, 5, 7,
+        51, 51, 37,
+        45, 51, 16, 12,
+        26, 20, 9, 14,
+        36, 149, 272, 86,
+        65, 46, 44, 27, 21,
+    ],
+    "Enrollment_2024": [
+        60, 77, 53, 7, 66, 111, 3,
+        325, 27, 48, 73, 77, 103,
+        10, 9, 4, 21,
+        204, 26, 10,
+        40, 133, 86, 56,
+        27, 160, 6, 4,
+        59, 86, 37,
+        34, 68, 21, 27,
+        19, 23, 9, 10,
+        31, 102, 224, 37,
+        65, 40, 57, 15, 20,
+    ],
+    "Pct_Change": [
+        -4.76, 11.59, 120.83, -53.33, 34.69, -42.49, -50.00,
+        10.17, 0.00, -32.39, 12.31, 13.24, 1.98,
+        42.86, -76.32, -42.86, 16.67,
+        4.08, 23.81, -47.37,
+        -18.37, 62.20, -14.00, 3.70,
+        -22.86, 16.79, 20.00, -42.86,
+        15.69, 68.63, 0.00,
+        -24.44, 33.33, 31.25, 125.00,
+        -26.92, 15.00, 0.00, -28.57,
+        -13.89, -31.54, -17.65, -56.98,
+        0.00, -13.04, 29.55, -44.44, -4.76,
+    ],
+})
+
+# Derived columns
+_bcg_raw["Abs_Change"] = _bcg_raw["Enrollment_2024"] - _bcg_raw["Enrollment_2022"]
+_bcg_raw["Small_Base"] = _bcg_raw["Enrollment_2022"] < 20
+
+# Quartile assignment (matches Excel cutoffs: Q1 <= -28.6%, Q2 <= 0%, Q3 <= 16.7%)
+def _assign_quartile(pct):
+    if pct <= -28.57:
+        return 1
+    elif pct <= 0.0:
+        return 2
+    elif pct <= 16.67:
+        return 3
+    else:
+        return 4
+
+_bcg_raw["Quartile"] = _bcg_raw["Pct_Change"].apply(_assign_quartile)
+
+# BCG Quadrant assignment: X = Enrollment_2024, Y = Pct_Change
+_median_enrollment = _bcg_raw["Enrollment_2024"].median()
+
+def _assign_quadrant(row):
+    large = row["Enrollment_2024"] >= _median_enrollment
+    growing = row["Pct_Change"] > 0
+    if large and growing:
+        return "Star"
+    elif large and not growing:
+        return "Cash Cow"
+    elif not large and growing:
+        return "Question Mark"
+    else:
+        return "Concern"
+
+_bcg_raw["Quadrant"] = _bcg_raw.apply(_assign_quadrant, axis=1)
+
+BCG_DATA = _bcg_raw.copy()
+
+# Department-level BCG (SCH-based, 22 departments) — original FLC analysis
+BCG_DEPT_DATA = pd.DataFrame({
     "Department": [
         "English", "Mathematics", "Health & Human Performance",
         "Biology", "Sociology", "Performing Arts", "Teacher Education",
@@ -141,6 +247,19 @@ BCG_DATA = pd.DataFrame({
     ],
 })
 
+BCG_DEPT_INSIGHTS = [
+    "Stars (High SCH Share, Growing): Business Administration and Psychology are the only departments with "
+    "both large SCH share (>4%) and positive 2-year growth \u2014 invest to sustain momentum.",
+    "Cash Cows (High SCH Share, Declining): English (10%), Mathematics (8.5%), Biology (7%), HHP (7.5%), "
+    "and Sociology (6%) generate the bulk of institutional SCH but all show 2-year declines \u2014 optimize "
+    "efficiency and protect enrollment in these revenue-critical departments.",
+    "Question Marks (Low SCH Share, Growing): Accounting (+12%) and History (+3%) show positive trends from "
+    "small bases \u2014 evaluate whether growth justifies increased investment.",
+    "Concerns (Low SCH Share, Declining): Political Science (\u221226%), Economics (\u221224%), Art & Design "
+    "(\u221218%), and Geosciences (\u221215.5%) face both small SCH share and steep declines \u2014 candidates "
+    "for structured program review. Note: some serve general education or mission-critical roles.",
+]
+
 BCG_QUADRANT_COLORS = {
     "Star": "#2ecc71",
     "Cash Cow": "#3498db",
@@ -149,10 +268,16 @@ BCG_QUADRANT_COLORS = {
 }
 
 BCG_INSIGHTS = [
-    "Stars (High Share, Growing): Business Administration and Psychology show strong market share AND growth - invest to maintain.",
-    "Cash Cows (High Share, Declining): English, Math, Biology, HHP generate significant SCH but are declining - optimize efficiency.",
-    "Question Marks (Low Share, Growing): Accounting and History show growth potential but small share - evaluate investment.",
-    "Concern (Low Share, Declining): Political Science, Economics, Art & Design face both low share and steep declines - restructure or sunset.",
+    "Stars (Large & Growing): Business Administration (+10%, 325 enrolled), Exercise Physiology (+17%, 160), "
+    "and Environmental Conservation & Mgmt (+62%, 133) lead FLC's portfolio with strong enrollment and positive growth.",
+    "Cash Cows (Large & Declining): Psychology (-18%, 224), Biology/CMB (-42%, 111), and Pre-Major Accounting "
+    "(-32%, 102) maintain significant enrollment but face declining trends requiring efficiency optimization.",
+    "Question Marks (Small & Growing): Anthropology (+121%, 53) and Music (+125%, 27) show dramatic growth "
+    "but from small bases \u2014 evaluate whether growth is sustainable before major investment.",
+    "Concerns (Small & Declining): Economics (-76%, 9), MND: Art & Design (-98%, 3), and Public Health "
+    "(-57%, 37) face both small enrollment and steep declines \u2014 candidates for structured program review.",
+    "Small-base caution: 12 programs had fewer than 20 students in 2022. Their percentage changes can be "
+    "misleading (e.g., Music: 12\u219227 = +125% from just 15 additional students).",
 ]
 
 # ============================================================================
@@ -162,104 +287,111 @@ BCG_INSIGHTS = [
 PESTLE_DATA = {
     "Political": {
         "impact": "High",
-        "impact_score": 4,
+        "impact_score": 5,
         "trend": "Negative",
         "factors": [
-            "Colorado state funding volatility for higher education",
-            "Federal financial aid policy changes (Pell Grant, Title IV)",
-            "Native American tuition waiver mandate (federal obligation)",
-            "State performance-based funding models",
-            "Political pressure on DEI programs in public institutions",
+            "Trump administration (2025\u20132029) reducing federal HE funding; 120 TRIO programs terminated",
+            "DEI programs under HIGH scrutiny \u2014 executive order targeting DEI in accreditation (Apr 2025)",
+            "Tribal education funding VOLATILE: 109% increase Sept 2025, but FY2026 proposes 24% cuts",
+            "Colorado FY 2025\u201326: $38.4M increase (far less than $95M requested); 3.5% tuition cap",
+            "Native American Tuition Waiver at risk of misclassification as DEI (waiver is statutory, not DEI)",
+            "HLC providing flexibility on diversity standards, but federal pressure on accreditors continues",
         ],
         "opportunities": [
-            "Leverage federal tribal education funding",
+            "Reframe Indigenous programs through statutory obligations (CRS 23-52-105) and cultural preservation (legally safe)",
+            "Use 'first-generation support' and 'inclusive excellence' framing (avoids identity-based language)",
             "Advocate for rural institution support in state legislature",
         ],
     },
     "Economic": {
         "impact": "High",
         "impact_score": 5,
-        "trend": "Mixed",
+        "trend": "Negative",
         "factors": [
-            "Declining state appropriations per student",
-            "Rising tuition sensitivity among families",
-            "Durango cost of living affecting faculty recruitment",
-            "Native American tuition waiver revenue impact (~37% of students)",
-            "Economic diversification in Four Corners region",
-            "Student debt burden concerns nationally",
+            "Colorado shifts costs to students via tuition rather than state appropriations",
+            "Rising tuition sensitivity; students increasingly price-conscious and comparison-shopping",
+            "Durango housing crisis \u2014 major hidden barrier for student attendance AND faculty recruitment",
+            "Native American tuition waiver revenue impact (~37% of students at zero tuition)",
+            "Regional economy tourism-dependent (seasonal, variable); limited large employers",
+            "Skills-based hiring growing \u2014 degrees less of an automatic hiring requirement",
         ],
         "opportunities": [
-            "Grow graduate programs for additional revenue",
-            "Expand dual enrollment pipeline",
-            "Develop workforce-aligned certificates",
+            "Healthcare/nursing programs (strong regional employer demand)",
+            "Expand dual enrollment pipeline (Pueblo CC, San Juan College feeders)",
+            "Develop workforce-aligned certificates and micro-credentials",
+            "Position as affordable rural alternative to cost-climbing urban institutions",
         ],
     },
     "Social": {
-        "impact": "High",
+        "impact": "Medium-High",
         "impact_score": 4,
         "trend": "Mixed",
         "factors": [
-            "Declining college-going rates nationally",
-            "Changing student expectations (career-focused outcomes)",
-            "Growing demand for flexible/hybrid learning",
-            "FLC unique mission serving Native American students (166 tribes)",
-            "First-generation students (43%) need additional support",
-            "Mental health and wellness demands increasing",
+            "Declining college-going rates nationally and in Colorado",
+            "Career outcome expectations dominant ('What job will I get?')",
+            "Indigenous education opportunity IS REAL (166 tribes, 37% waiver, underserved nationally)",
+            "First-generation students (43%) need targeted support systems",
+            "Growing skepticism about ROI of higher education; trade/vocational paths gaining acceptance",
+            "Strong outdoor/recreation culture aligns with FLC place-based brand",
         ],
         "opportunities": [
-            "Outdoor recreation lifestyle as recruitment differentiator",
-            "Indigenous education leadership positioning",
-            "Experiential learning emphasis",
+            "Indigenous education leadership \u2014 reframe through statutory obligations (CRS 23-52-105), not DEI",
+            "First-generation student success programs (safe framing, encompasses many Indigenous students)",
+            "Place-based brand leveraging Durango outdoor lifestyle as recruitment differentiator",
+            "Career outcome emphasis across all programs",
         ],
     },
     "Technological": {
-        "impact": "Medium",
-        "impact_score": 3,
-        "trend": "Opportunity",
+        "impact": "High",
+        "impact_score": 4,
+        "trend": "Rapidly Changing",
         "factors": [
-            "AI disruption in curriculum and pedagogy",
-            "Need for technology infrastructure upgrades",
-            "Online/hybrid program delivery expectations",
-            "Data analytics for student success and retention",
-            "AI Institute at FLC as emerging strength",
+            "AI disruption transforming pedagogy, assessment, and student expectations",
+            "Online graduate market SATURATED \u2014 ASU, SNHU, Western Governors dominate ($50M+ marketing)",
+            "FLC has NO online brand nationally; ~25 online courses (~10% of offerings)",
+            "Passive video lectures becoming obsolete; AI-enabled adaptive learning replacing them",
+            "AI Institute at FLC as emerging institutional strength",
+            "Online program development requires 1\u20132+ years governance + substantial investment",
         ],
         "opportunities": [
-            "AI Institute partnerships and growth",
-            "Technology-enhanced experiential learning",
-            "Online graduate program expansion",
+            "AI Institute partnerships and curriculum integration",
+            "AI-enabled advising, early alerts, and retention prediction tools",
+            "AI literacy across all disciplines as differentiator",
         ],
     },
     "Legal": {
-        "impact": "Medium",
-        "impact_score": 3,
-        "trend": "Stable",
+        "impact": "High",
+        "impact_score": 4,
+        "trend": "Deteriorating",
         "factors": [
-            "Accreditation compliance requirements (HLC)",
-            "Title IX and student safety regulations",
-            "Federal reporting mandates (IPEDS)",
-            "Employment law for faculty/staff",
-            "Tribal sovereignty considerations in partnerships",
+            "Title VI scrutiny \u2014 50+ universities under investigation for race-conscious programs",
+            "Native American Tuition Waiver has DISTINCT legal basis (CRS 23-52-105, since 1911)",
+            "HLC accreditation: federal pressure on DEI standards, but HLC offers flexibility",
+            "Trump administration revising Title IX regulations (definitions, due process in flux)",
+            "FERPA compliance critical for AI tools processing student data",
+            "Programs framed as 'equity-focused' are primary federal targets",
         ],
         "opportunities": [
-            "Streamlined accreditation through proactive compliance",
-            "Tribal education partnership agreements",
+            "NATW defensible under Title VI (statutory basis per CRS 23-52-105, not voluntary DEI)",
+            "Government-to-government tribal partnerships (sovereignty framing, not race-based)",
+            "HLC flexibility allows alternative methods to meet diversity-related standards",
         ],
     },
     "Environmental": {
         "impact": "Medium",
         "impact_score": 3,
-        "trend": "Opportunity",
+        "trend": "Negative",
         "factors": [
-            "Climate change impacts on Durango/mountain region",
-            "Campus sustainability expectations from students",
-            "Environmental science as program strength",
-            "Outdoor recreation economy dependency on climate",
-            "Wildfire risk to campus and community",
+            "Southwest Colorado wildfire risk increasing \u2014 smoke impacts air quality and outdoor activities",
+            "Colorado River basin under long-term drought stress; water rights contentious",
+            "Snowpack variability affects regional economy (ski, rafting, outdoor recreation)",
+            "Outdoor recreation brand is FLC strength but CLIMATE-VULNERABLE",
+            "Sustainability compliance is baseline, not differentiator",
         ],
         "opportunities": [
-            "Position as leader in sustainability education",
-            "Climate resilience research opportunities",
-            "Green campus initiatives for recruitment",
+            "Proactive sustainability initiatives to build brand beyond compliance",
+            "Emergency preparedness planning as operational strength",
+            "Environmental science/conservation programs align with regional needs",
         ],
     },
 }
@@ -271,76 +403,76 @@ PESTLE_DATA = {
 PORTERS_DATA = {
     "Competitive Rivalry": {
         "rating": "High",
-        "score": 4.5,
+        "score": 4.0,
         "color": "#e74c3c",
-        "description": "Intense competition from CU system, CSU, Western Colorado, and online programs",
+        "description": "Intense competition from CU system, CSU, Western Colorado; online threat assumed but unverified for FLC",
         "indicators": [
             {"name": "Number of competing institutions in CO", "value": "30+", "trend": "Increasing"},
             {"name": "FLC market share of CO HS graduates", "value": "~2%", "trend": "Stable"},
             {"name": "Enrollment change vs peers", "value": "-2.5%", "trend": "Declining"},
             {"name": "Tuition discount rate pressure", "value": "High", "trend": "Increasing"},
-            {"name": "Online program competition", "value": "Significant", "trend": "Increasing"},
+            {"name": "Online competition (unverified for FLC)", "value": "Assumed", "trend": "Unknown"},
         ],
     },
     "Threat of New Entrants": {
-        "rating": "Medium-High",
-        "score": 3.5,
-        "color": "#e67e22",
-        "description": "Online programs and micro-credentials lowering traditional barriers to entry",
+        "rating": "Medium",
+        "score": 3.0,
+        "color": "#f39c12",
+        "description": "Accreditation remains HIGH barrier for degree-granting; certificate/non-degree entrants are real threat",
         "indicators": [
-            {"name": "Accreditation barriers", "value": "High", "trend": "Stable"},
-            {"name": "Online program launches (competing)", "value": "Growing", "trend": "Increasing"},
-            {"name": "Boot camp / certificate programs", "value": "Moderate", "trend": "Increasing"},
+            {"name": "Accreditation barriers (degree)", "value": "High", "trend": "Stable"},
+            {"name": "Certificate/non-degree barriers", "value": "Low", "trend": "Decreasing"},
+            {"name": "Boot camp / micro-credential programs", "value": "Growing", "trend": "Increasing"},
             {"name": "Community college expansion", "value": "Active", "trend": "Increasing"},
-            {"name": "Capital requirements barrier", "value": "Moderate", "trend": "Decreasing"},
+            {"name": "Capital requirements for online", "value": "High", "trend": "Stable"},
         ],
     },
     "Bargaining Power of Students": {
         "rating": "High",
         "score": 4.0,
         "color": "#e74c3c",
-        "description": "Students have many choices; FLC must compete on value, experience, and outcomes",
+        "description": "Students have many choices; price sensitivity high; FLC must compete on value and outcomes",
         "indicators": [
-            {"name": "Yield rate (confirmed to enrolled)", "value": "~87%", "trend": "Improving"},
+            {"name": "Yield rate (needs verification)", "value": "Unverified", "trend": "Unknown"},
             {"name": "Summer melt rate (FY)", "value": "12.9%", "trend": "Improving"},
             {"name": "Transfer-out competition", "value": "Moderate", "trend": "Stable"},
             {"name": "Price sensitivity", "value": "High", "trend": "Increasing"},
-            {"name": "Information transparency", "value": "High", "trend": "Increasing"},
+            {"name": "Career outcome expectations", "value": "High", "trend": "Increasing"},
         ],
     },
     "Bargaining Power of Suppliers": {
-        "rating": "Medium-High",
-        "score": 3.5,
-        "color": "#e67e22",
-        "description": "Faculty recruitment challenging due to remote location and salary competition",
+        "rating": "Medium",
+        "score": 3.0,
+        "color": "#f39c12",
+        "description": "National faculty supply HIGH in most fields; real issue is Durango recruitment (cost of living + salary)",
         "indicators": [
-            {"name": "Faculty with terminal degrees", "value": "98%", "trend": "Stable"},
-            {"name": "Durango cost of living", "value": "High", "trend": "Increasing"},
-            {"name": "Specialized faculty scarcity", "value": "Moderate", "trend": "Increasing"},
-            {"name": "Technology vendor dependency", "value": "Moderate", "trend": "Stable"},
+            {"name": "National faculty supply", "value": "High", "trend": "Stable"},
+            {"name": "Durango cost of living barrier", "value": "High", "trend": "Increasing"},
+            {"name": "Durango recruitment competitiveness", "value": "Below avg", "trend": "Worsening"},
+            {"name": "High-demand fields (nursing, CS, engr)", "value": "Tight", "trend": "Increasing"},
             {"name": "Salary competitiveness vs peers", "value": "Below avg", "trend": "Stable"},
         ],
     },
     "Threat of Substitutes": {
-        "rating": "Medium-High",
-        "score": 3.5,
-        "color": "#e67e22",
-        "description": "Online degrees, certificates, and workforce programs offer alternatives to 4-year degree",
+        "rating": "Medium",
+        "score": 3.0,
+        "color": "#f39c12",
+        "description": "Online/certificates growing nationally, but FLC's place-based brand serves experience-preferring students",
         "indicators": [
-            {"name": "Online degree program growth", "value": "Rapid", "trend": "Increasing"},
+            {"name": "Online degree program growth (national)", "value": "Rapid", "trend": "Increasing"},
             {"name": "Micro-credential adoption", "value": "Growing", "trend": "Increasing"},
             {"name": "Community college pathways", "value": "Strong", "trend": "Increasing"},
-            {"name": "Employer credential acceptance", "value": "Expanding", "trend": "Increasing"},
-            {"name": "FLC experiential differentiation", "value": "Strong", "trend": "Stable"},
+            {"name": "FLC place-based differentiation", "value": "Strong", "trend": "Stable"},
+            {"name": "Are FLC students choosing online? (unverified)", "value": "Unknown", "trend": "Unknown"},
         ],
     },
 }
 
 PORTERS_INSIGHTS = [
-    "Overall competitive intensity is HIGH - FLC operates in a challenging market requiring clear differentiation.",
-    "FLC's strongest defensive positions: unique Native American mission, outdoor recreation lifestyle, and small liberal arts experience.",
-    "Greatest threats: online competition eroding geographic advantage, student price sensitivity, and faculty recruitment in Durango.",
-    "Strategic imperative: Leverage unique mission and location as competitive moats while expanding program relevance.",
+    "Overall competitive intensity is HIGH, but FLC's place-based, experiential value proposition serves a distinct market segment.",
+    "FLC's strongest defensive positions: statutory Native American mission (CRS 23-52-105, federal-state contract), outdoor recreation lifestyle, and small class sizes.",
+    "Online competition assumed based on national trends but UNVERIFIED for FLC \u2014 admitted-but-not-enrolled survey data needed.",
+    "Faculty recruitment is a Durango problem (cost of living + salary), not a national supply problem \u2014 except in nursing, CS, and engineering.",
 ]
 
 # ============================================================================
@@ -416,10 +548,11 @@ GA_RECOMMENDATION_COLORS = {
 }
 
 GA_INSIGHTS = [
-    "GROW programs (high market + strong economics): Business Admin, Psychology, Engineering, Health Sciences, Computer Info Systems, Exercise Physiology, Accounting.",
-    "SUSTAIN programs (solid market, needs efficiency): Environmental programs, Criminology, Biology, Sociology, Teacher Education.",
-    "TRANSFORM programs (weak market, strong economics): English and Mathematics generate revenue but face enrollment pressure - innovate delivery.",
-    "EVALUATE/SUNSET programs (weak market + economics): Political Science, Philosophy, and Art & Design need strategic review for restructuring or phase-out.",
+    "GROW programs (high market + strong economics): Business Admin, Psychology, Engineering, Health Sciences, CIS, Exercise Physiology, Accounting show strongest investment case.",
+    "SUSTAIN programs (solid market, needs efficiency): Environmental programs, Criminology, Biology, Sociology, Teacher Education maintain enrollment but need optimization.",
+    "TRANSFORM programs (weak market, strong economics): English and Math generate significant SCH as foundational/service courses \u2014 low Market Score reflects major enrollment, not institutional value.",
+    "EVALUATE/SUNSET programs: Political Science, Art & Design require strategic review. Note: NAIS is mission-critical and must not be evaluated on enrollment metrics alone.",
+    "Data source disclaimer: FLC does not have a Gray Associates subscription. Scores are proxy estimates based on FLC data, not official Gray Associates output.",
 ]
 
 # ============================================================================
@@ -652,25 +785,27 @@ FRAMEWORK_DESCRIPTIONS = {
         "Each factor is assessed for impact severity and directional trend to prioritize strategic responses."
     ),
     "Porters": (
-        "Porter's Five Forces framework assesses the competitive intensity and attractiveness "
-        "of the higher education market in which Fort Lewis College operates. By analyzing the "
-        "threat of new entrants, bargaining power of suppliers (faculty/vendors) and buyers (students), "
-        "threat of substitutes, and rivalry among existing competitors, this model reveals FLC's "
-        "competitive position and informs differentiation strategy."
+        "Porter's Five Forces framework assesses the competitive intensity of the higher education "
+        "market in which Fort Lewis College operates. This analysis corrects common AI assumptions: "
+        "online competition is unverified for FLC (place-based students may not be choosing online), "
+        "faculty 'scarcity' is a Durango recruitment issue (national supply is HIGH in most fields), "
+        "and FLC's experiential value proposition serves a distinct market segment."
     ),
     "Gray": (
-        "Gray Associates Portfolio Analysis evaluates academic programs using a data-driven "
-        "methodology that plots Market Score (student demand, employment outlook, and competitive "
-        "positioning) against Program Economics (revenue efficiency and contribution margin). "
-        "This framework classifies programs into actionable categories\u2014Grow, Sustain, Transform, "
-        "Evaluate, or Sunset Review\u2014to guide investment and restructuring decisions."
+        "Gray Associates Portfolio Analysis evaluates academic programs by plotting Market Score "
+        "(student demand 40% + employment 40% + competition 20%) against Program Economics "
+        "(SCH efficiency + cost structure). Programs are classified as Grow, Sustain, Transform, "
+        "Evaluate, or Sunset Review. Important: FLC does not have a Gray Associates subscription; "
+        "scores are proxy estimates based on FLC institutional data, not official Gray output."
     ),
     "BCG": (
-        "The BCG Growth-Share Matrix, adapted from the Boston Consulting Group framework, "
-        "categorizes FLC's academic departments based on two dimensions: relative market share "
-        "(measured by percentage of total Student Credit Hours) and growth rate (2-year enrollment "
-        "change). Programs are classified as Stars, Cash Cows, Question Marks, or Concerns to "
-        "guide resource allocation priorities."
+        "The BCG Growth-Share Matrix, adapted from the Boston Consulting Group framework, analyzes "
+        "FLC's academic portfolio at two levels. The department-level view maps 22 departments by "
+        "SCH share (% of total Student Credit Hours) vs. 2-year enrollment change, identifying which "
+        "departments generate institutional revenue. The major-level view maps 48 individual majors by "
+        "2024 enrollment headcount vs. 2022\u20132024 percentage change, with bubble size representing "
+        "absolute enrollment change. Programs with fewer than 20 students in 2022 are flagged as "
+        "\u2018small base\u2019 since their percentage changes can be misleading."
     ),
 }
 
@@ -684,39 +819,39 @@ SWOT_DATA = {
         "icon": "S",
         "items": [
             {
-                "title": "Unique Native American Mission",
-                "detail": "Federal obligation to serve Native American students with tuition waiver creates a distinctive institutional identity serving 166 tribes. 37% of students receive the Native American Tuition Waiver.",
-                "source": "PESTLE (Social/Political), Institutional Data",
+                "title": "Statutory Native American Mission",
+                "detail": "Federal-state-tribal obligation (CRS 23-52-105, since 1911) to serve Native American students with tuition waiver. Serves 166 tribes; 37% of students receive waiver. This is a values-driven commitment, not a market instrument.",
+                "source": "PESTLE (Political/Legal), Institutional Data",
             },
             {
-                "title": "Strong Star Programs",
-                "detail": "Business Administration (298 enrolled, +4% growth) and Psychology (227 enrolled, +3% growth) demonstrate both high market share and positive trajectory.",
-                "source": "BCG Matrix, Gray Associates",
+                "title": "Strong Star Programs (Major-Level BCG)",
+                "detail": "Business Administration (+10%, 325 enrolled), Exercise Physiology (+17%, 160), Environmental Conservation & Mgmt (+62%, 133), and Biochemistry (+35%, 66) lead with both size and growth.",
+                "source": "BCG Matrix (48-major analysis), Gray Associates",
             },
             {
-                "title": "High-SCH Cash Cow Programs",
-                "detail": "Nine departments (English, Math, Biology, HHP, etc.) generate the bulk of student credit hours, providing a stable revenue foundation despite enrollment softness.",
-                "source": "BCG Matrix",
-            },
-            {
-                "title": "Outdoor Recreation & Location Differentiator",
-                "detail": "Durango's mountain setting and outdoor lifestyle create a powerful recruitment differentiator that online competitors cannot replicate. Adventure Education is uniquely positioned.",
+                "title": "Place-Based Brand & Outdoor Differentiation",
+                "detail": "Durango's mountain setting and outdoor lifestyle create a recruitment differentiator that online competitors cannot replicate. FLC serves experience-preferring students, a distinct market segment.",
                 "source": "Porter's Five Forces, PESTLE (Social/Environmental)",
             },
             {
-                "title": "Growing Graduate Programs",
-                "detail": "Graduate enrollment has grown from 10 (2016) to 160 (Fall 2025), a 16x increase demonstrating capacity to launch and scale new credential levels.",
-                "source": "Institutional Data, Gray Associates",
-            },
-            {
-                "title": "Small Class Sizes & Faculty Quality",
-                "detail": "Average class size of 19, 100% of classes under 50 students, 98% of tenure-track faculty hold terminal degrees. 15:1 student-faculty ratio.",
+                "title": "Small Class Sizes & Teaching Focus",
+                "detail": "Average class size of 19, 15:1 student-faculty ratio. 98% of tenure-track faculty hold terminal degrees (note: terminal degree % is a common proxy but does not directly measure teaching effectiveness).",
                 "source": "Institutional Data",
             },
             {
+                "title": "Growing Graduate Program",
+                "detail": "Graduate enrollment grew from 10 (2016) to 160 (Fall 2025). However, FLC has only ONE graduate program \u2014 further expansion requires 1\u20132+ years shared governance, accreditation, and significant startup investment.",
+                "source": "Institutional Data, Budget Constraints",
+            },
+            {
                 "title": "Strong Employment-Aligned Programs",
-                "detail": "Engineering (92), Computer Info Systems (90), Business Admin (85), and Health Sciences (85) score highest on employment outlook in Gray Associates analysis.",
-                "source": "Gray Associates",
+                "detail": "Engineering (92), CIS (90), Business Admin (85), and Health Sciences (85) score highest on Gray Associates employment outlook. Healthcare and STEM fields show strongest regional job demand.",
+                "source": "Gray Associates, PESTLE (Economic)",
+            },
+            {
+                "title": "NATW Legal Foundation",
+                "detail": "The Native American Tuition Waiver has a distinct legal basis (CRS 23-52-105, 1911 federal-state contract) separate from voluntary DEI programs. This is defensible under current Title VI scrutiny.",
+                "source": "PESTLE (Legal), Context Files",
             },
         ],
     },
@@ -726,33 +861,38 @@ SWOT_DATA = {
         "items": [
             {
                 "title": "Declining Undergraduate Enrollment",
-                "detail": "UG degree-seeking enrollment fell from 3,498 (2016) to 3,021 (2025), a -13.6% decline over 10 years. Total headcount down -2.5% YoY.",
-                "source": "Institutional Data, Enrollment Overview",
+                "detail": "UG degree-seeking enrollment fell from 3,498 (2016) to 3,021 (2025), -13.6% over 10 years. Major-level data shows overall -3.1% decline (2,899\u21922,810) from 2022\u20132024.",
+                "source": "Institutional Data, BCG Matrix (48-major analysis)",
             },
             {
-                "title": "Multiple Concern-Quadrant Programs",
-                "detail": "Nine departments in BCG Concern quadrant: Political Science (-26%), Economics (-24%), Art & Design (-18%), Geosciences (-15.5%) face both low market share and steep enrollment declines.",
-                "source": "BCG Matrix",
+                "title": "17 Concern-Quadrant Majors",
+                "detail": "BCG analysis shows 17 of 48 majors in the Concern quadrant (small & declining). Economics (-76%, 9 enrolled), MND Art & Design (-98%, 3), and Public Health (-57%, 37) face critical enrollment declines.",
+                "source": "BCG Matrix (48-major analysis)",
             },
             {
                 "title": "Retention Below National Average",
-                "detail": "66.1% FTFT retention rate is below the national average for public 4-year institutions (~73%). Equity gaps persist: First-Gen (60.9%), Pell (61.7%), Students of Color (62.6%).",
+                "detail": "66.1% FTFT retention vs. ~73% national average. Equity gaps persist: First-Gen 60.9%, Pell 61.7%, Students of Color 62.6%.",
                 "source": "Institutional Data, PESTLE (Social)",
             },
             {
-                "title": "Remote Location Faculty Recruitment",
-                "detail": "Durango's high cost of living and geographic isolation create persistent challenges in attracting and retaining specialized faculty. Salary competitiveness is below average.",
-                "source": "Porter's Five Forces (Supplier Power)",
+                "title": "Durango Housing Crisis & Faculty Recruitment",
+                "detail": "Durango cost of living is a hidden barrier for both students (attendance) and faculty (recruitment). National faculty supply is HIGH in most fields \u2014 the real issue is FLC's location + salary competitiveness.",
+                "source": "Porter's Five Forces, PESTLE (Economic)",
+            },
+            {
+                "title": "Faculty Footprint Disproportionate to Enrollment",
+                "detail": "Number of programs and faculty positions are disproportionately large relative to student enrollment. Faculty governance resistance expected for any consolidation.",
+                "source": "Institutional Priorities, SWOT Context",
+            },
+            {
+                "title": "No Online Brand or Infrastructure",
+                "detail": "Only ~25 online courses (~10% of offerings). Online market is SATURATED (ASU, SNHU, WGU spend $50M+ on marketing). FLC has no online brand nationally and cannot compete on price with scale players.",
+                "source": "PESTLE (Technological), Porter's Five Forces",
             },
             {
                 "title": "Tuition Waiver Revenue Impact",
-                "detail": "The Native American tuition waiver, while mission-critical, affects revenue generation with ~37% of students receiving the waiver, creating dependency on state funding.",
-                "source": "PESTLE (Economic/Political)",
-            },
-            {
-                "title": "Limited Online Program Offerings",
-                "detail": "Only 25 online course offerings currently, significantly limiting reach and competitiveness against institutions with robust online portfolios.",
-                "source": "Porter's Five Forces, Gray Associates",
+                "detail": "~37% of students at zero tuition via NATW creates dependency on state appropriations. With state funding declining, this structural gap widens.",
+                "source": "PESTLE (Economic/Political), Budget Constraints",
             },
         ],
     },
@@ -761,34 +901,39 @@ SWOT_DATA = {
         "icon": "O",
         "items": [
             {
-                "title": "Expand High-Demand Programs",
-                "detail": "Gray Associates identifies 7 programs for GROW status: Business Admin, Psychology, Engineering, Health Sciences, Computer Info Systems, Exercise Physiology, Accounting. These align with strong employment markets.",
-                "source": "Gray Associates, BCG Matrix",
+                "title": "Invest in Star Programs",
+                "detail": "BCG Star programs (Business Admin, Exercise Physiology, Env Conservation, Biochemistry, Engineering, etc.) show enrollment growth. Gray Associates classifies 7 programs for GROW status with strong employment alignment.",
+                "source": "BCG Matrix, Gray Associates",
             },
             {
-                "title": "Graduate Program Expansion",
-                "detail": "16x growth in graduate enrollment (10 to 160) over 9 years demonstrates untapped capacity. Health Sciences graduate certificate and online MBA are immediate opportunities.",
-                "source": "Institutional Data, Gray Associates",
-            },
-            {
-                "title": "AI Institute Development",
-                "detail": "FLC's AI Institute represents an emerging strength in a high-demand field. Partnerships and curriculum integration can attract new student segments and research funding.",
-                "source": "PESTLE (Technological), Institutional Data",
+                "title": "Indigenous Education Leadership (Statutorily Grounded)",
+                "detail": "Serving 166 tribes with 37% waiver enrollment is a genuine national distinction. Must be framed through statutory obligations (CRS 23-52-105), cultural preservation, and sovereign agreements \u2014 not DEI language \u2014 to remain viable in current political climate. Reconciles with DEI threat below.",
+                "source": "PESTLE (Social/Legal), SWOT Context",
             },
             {
                 "title": "Dual Enrollment Pipeline Growth",
-                "detail": "Dual enrollment grew from 52 (2016) to 235 (2025), 4.5x increase. 27 prior dual-enrollment students converted to degree-seeking in Fall 2025. Expansion partnerships with San Juan College, Pueblo CC, and Red Rocks CC are viable.",
+                "detail": "Dual enrollment grew 4.5x (52\u2192235) since 2016. 27 converted to degree-seeking in Fall 2025. Partnerships with Pueblo CC, San Juan College, Red Rocks CC are viable low-risk growth channels.",
                 "source": "Institutional Data, Enrollment Overview",
             },
             {
-                "title": "Sustainability & Environmental Leadership",
-                "detail": "FLC's Environmental Conservation & Management (133 enrolled) and Environmental Science (87 enrolled) programs, combined with Durango's setting, position the institution for climate/sustainability leadership.",
-                "source": "PESTLE (Environmental), Gray Associates",
+                "title": "AI Institute & Technology Integration",
+                "detail": "FLC's AI Institute is an emerging strength. AI-enabled advising, retention prediction, and curriculum integration can attract new students. Requires realistic investment assessment.",
+                "source": "PESTLE (Technological), Institutional Data",
             },
             {
-                "title": "Indigenous Education National Leadership",
-                "detail": "Serving 166 tribes with 26.5% Native American enrollment creates opportunity to become the premier Indigenous higher education institution nationally, attracting federal grants and partnerships.",
+                "title": "Healthcare & Workforce Programs",
+                "detail": "Healthcare sector showing strongest regional job growth. Health Sciences (+69%, 86 enrolled) is a BCG Star. Nursing, allied health, and behavioral health have strong employer demand in SW Colorado.",
+                "source": "PESTLE (Economic), Gray Associates, BCG Matrix",
+            },
+            {
+                "title": "First-Generation Student Success",
+                "detail": "43% first-gen population is a safe, non-identity-based framing that encompasses many Indigenous students. First-gen support programs are politically viable and address a real retention gap (60.9% vs 66.1%).",
                 "source": "PESTLE (Social/Political), Institutional Data",
+            },
+            {
+                "title": "Graduate Certificate Development (Long-Term)",
+                "detail": "Graduate enrollment growth (10\u2192160) shows capacity, but expansion requires defensible niche (e.g., tribal governance, outdoor education leadership). Generic MBA/MEd markets are saturated. Timeline: 2\u20133+ years.",
+                "source": "Budget Constraints, SWOT Context, PESTLE (Technological)",
             },
         ],
     },
@@ -797,34 +942,39 @@ SWOT_DATA = {
         "icon": "T",
         "items": [
             {
-                "title": "Intensifying Online Competition",
-                "detail": "Online programs from large universities erode FLC's geographic advantage. Porter's rates Competitive Rivalry at 4.5/5 and Threat of Substitutes at 3.5/5.",
-                "source": "Porter's Five Forces",
+                "title": "DEI & Federal Scrutiny of Public Higher Ed",
+                "detail": "120 TRIO programs terminated; 50+ universities under Title VI investigation. Programs framed as 'equity-focused' are primary targets. FLC's NATW is legally defensible (statutory basis) but could be misclassified as DEI. Reconcile: Indigenous programs must use statutory/sovereign framing.",
+                "source": "PESTLE (Political/Legal)",
             },
             {
-                "title": "State Funding Volatility",
-                "detail": "Colorado state appropriations per student are declining. Performance-based funding models create additional uncertainty for smaller institutions.",
+                "title": "Tribal Education Funding Volatility",
+                "detail": "Federal tribal education funding is VOLATILE: 109% increase Sept 2025, but FY2026 budget proposes 24% cuts. State appropriations also falling short ($38.4M vs $95M requested).",
                 "source": "PESTLE (Political/Economic)",
             },
             {
                 "title": "Declining College-Going Rates",
-                "detail": "National college-going rates are declining, particularly affecting small public liberal arts institutions. Colorado first-year student pipeline down -7.6% for FLC in 2025.",
+                "detail": "National and Colorado college-going rates declining. Growing skepticism about ROI of degrees. FLC first-year pipeline down -7.6% in 2025. Small public liberal arts institutions most affected.",
                 "source": "PESTLE (Social), Enrollment Overview",
             },
             {
-                "title": "Student Price Sensitivity",
-                "detail": "Porter's rates Bargaining Power of Students at 4.0/5 (High). Rising tuition sensitivity, student debt concerns, and increasing discount rate pressure threaten net revenue.",
-                "source": "Porter's Five Forces, PESTLE (Economic)",
+                "title": "Durango Housing Crisis",
+                "detail": "Dramatic cost increases affect student attendance and faculty recruitment. This is a hidden barrier that compounds enrollment decline and makes salary offers less competitive.",
+                "source": "PESTLE (Economic), Porter's Five Forces",
             },
             {
-                "title": "Alternative Credential Growth",
-                "detail": "Micro-credentials, boot camps, and certificate programs are growing rapidly. Employers increasingly accept alternative credentials, threatening traditional 4-year degree demand.",
-                "source": "Porter's Five Forces (Substitutes)",
+                "title": "Alternative Credentials Eroding Degree Value",
+                "detail": "Micro-credentials, boot camps, and certificates growing rapidly. Skills-based hiring means degrees are less of an automatic requirement. FLC's liberal arts value proposition harder to sell without career framing.",
+                "source": "Porter's Five Forces (Substitutes), PESTLE (Economic)",
             },
             {
-                "title": "Political Pressure on DEI & Public Higher Ed",
-                "detail": "Political landscape creates uncertainty for diversity programs, public institution funding, and federal financial aid policy (Pell Grant, Title IV).",
-                "source": "PESTLE (Political)",
+                "title": "Climate Vulnerability of Outdoor Brand",
+                "detail": "Southwest Colorado wildfire risk increasing, drought stressing Colorado River basin, snowpack variability affecting ski/rafting economy. FLC's outdoor brand is a strength but climate-vulnerable.",
+                "source": "PESTLE (Environmental)",
+            },
+            {
+                "title": "Shared Governance Constraints on Speed",
+                "detail": "Faculty governance takes 1\u20132+ years for program changes. Conservative Board risk tolerance. Any restructuring or new program requires significant political capital and patience.",
+                "source": "SWOT Context, Institutional Priorities",
             },
         ],
     },
@@ -837,47 +987,47 @@ SWOT_DATA = {
 ZONE_TO_WIN_DATA = {
     "Performance Zone": {
         "color": "#2ecc71",
-        "description": "Revenue maintenance and growth in existing strong programs. Focus on scaling proven programs that drive enrollment and tuition revenue.",
+        "description": "Revenue maintenance and growth in proven programs. Focus on BCG Stars and Gray Associates GROW programs that drive enrollment.",
         "programs": [
-            {"name": "Business Administration", "action": "Expand online offerings, add MBA track", "investment": "High"},
-            {"name": "Psychology", "action": "Grow applied psychology tracks, add graduate options", "investment": "High"},
-            {"name": "Engineering", "action": "Strengthen co-op/internship pipeline, industry partnerships", "investment": "High"},
-            {"name": "Health Sciences", "action": "Launch graduate certificate, expand clinical partnerships", "investment": "High"},
-            {"name": "Computer Information Systems", "action": "Align with AI Institute, add cybersecurity track", "investment": "Medium"},
-            {"name": "Exercise Physiology", "action": "Develop sports medicine specializations", "investment": "Medium"},
+            {"name": "Business Administration", "action": "Protect capacity, expand pathways (325 enrolled, +10%)", "investment": "High"},
+            {"name": "Exercise Physiology", "action": "Develop sports medicine and wellness specializations (160, +17%)", "investment": "Medium"},
+            {"name": "Environmental Conservation & Mgmt", "action": "Leverage regional economy and sustainability demand (133, +62%)", "investment": "Medium"},
+            {"name": "Engineering", "action": "Strengthen co-op/internship pipeline, industry partnerships (51, +4%)", "investment": "High"},
+            {"name": "Health Sciences", "action": "Expand clinical partnerships; strongest regional job demand (86, +69%)", "investment": "High"},
+            {"name": "Computer Information Systems", "action": "Align with AI Institute; cybersecurity and data science tracks (77, +13%)", "investment": "Medium"},
         ],
     },
     "Productivity Zone": {
         "color": "#3498db",
-        "description": "Enabling investments for operational efficiency and effectiveness across academic and administrative support functions.",
+        "description": "Enabling investments for retention, efficiency, and operational excellence. Highest-priority revenue stream: retention improvement.",
         "programs": [
-            {"name": "Advising System Overhaul", "action": "Implement data-driven predictive advising platform", "investment": "High"},
-            {"name": "Retention Programs", "action": "First-Gen/Pell student intervention programs, Compass expansion", "investment": "High"},
-            {"name": "IT Infrastructure", "action": "LMS upgrade, data analytics platform, classroom technology", "investment": "Medium"},
-            {"name": "Faculty Recruitment Package", "action": "Housing assistance, salary competitiveness, remote work options", "investment": "Medium"},
-            {"name": "Transfer Pathway Optimization", "action": "Streamline articulation agreements with top feeder schools", "investment": "Low"},
-            {"name": "Marketing & Communications", "action": "Targeted digital recruitment, brand positioning refresh", "investment": "Medium"},
+            {"name": "Retention Programs", "action": "First-gen support (safe framing), Compass expansion, early alerts; close 66.1% \u2192 70% gap", "investment": "High"},
+            {"name": "Advising System Overhaul", "action": "AI-enabled predictive advising; retention risk identification", "investment": "High"},
+            {"name": "Faculty Recruitment Package", "action": "Housing assistance + salary competitiveness for Durango (national supply is HIGH; issue is location)", "investment": "Medium"},
+            {"name": "Transfer Pathway Optimization", "action": "Streamline articulation with Pueblo CC, San Juan College, Red Rocks CC", "investment": "Low"},
+            {"name": "Marketing & Communications", "action": "Place-based brand positioning; statutorily grounded Indigenous recruitment (not DEI language)", "investment": "Medium"},
+            {"name": "Program Review Process", "action": "Structured review of 17 Concern-quadrant majors; protect mission-critical programs (NAIS)", "investment": "Low"},
         ],
     },
     "Incubation Zone": {
         "color": "#f39c12",
-        "description": "Disciplined experimentation with emerging academic, administrative, community, or external opportunities that could become future revenue streams.",
+        "description": "Disciplined experimentation with emerging opportunities. Online programs heavily constrained by saturated market and governance timelines.",
         "programs": [
-            {"name": "AI Institute Expansion", "action": "Corporate partnerships, research grants, certificate programs", "investment": "Medium"},
-            {"name": "Online Degree Programs", "action": "Pilot 2-3 fully online bachelor's completions (Business, Psychology)", "investment": "Medium"},
-            {"name": "Micro-Credentials & Badges", "action": "Stackable certificates in IT, sustainability, outdoor leadership", "investment": "Low"},
-            {"name": "Dual Enrollment Expansion", "action": "New partnerships with regional high schools and community colleges", "investment": "Low"},
-            {"name": "Workforce Development Partnerships", "action": "Employer-sponsored programs in healthcare, technology, outdoor industry", "investment": "Low"},
+            {"name": "AI Institute Expansion", "action": "Corporate partnerships, research grants, AI literacy certificates", "investment": "Medium"},
+            {"name": "Dual Enrollment Expansion", "action": "New partnerships with regional high schools and community colleges (grew 4.5x since 2016)", "investment": "Low"},
+            {"name": "Workforce Certificates", "action": "Stackable micro-credentials in healthcare, IT, sustainability (must complement not cannibalize degrees)", "investment": "Low"},
+            {"name": "Healthcare Pipeline", "action": "Nursing and allied health programs aligned with regional employer demand", "investment": "Medium"},
+            {"name": "Online Program Pilot", "action": "CAUTION: Market saturated (ASU/SNHU/WGU). Requires 1\u20132yr governance + $50K+ marketing. Start with Indigenous-niche hybrid only.", "investment": "Medium"},
         ],
     },
     "Transformation Zone": {
         "color": "#9b59b6",
-        "description": "Strategic bets on future-defining innovations and new markets that ensure a thriving Academic Affairs at FLC over the long term.",
+        "description": "Strategic bets that change institutional trajectory. Must be framed through statutory obligations (CRS 23-52-105) and sovereign agreements, not DEI. Governance timeline: 2\u20135 years.",
         "programs": [
-            {"name": "Indigenous Education Hub", "action": "National center for Indigenous higher education research and practice", "investment": "High"},
-            {"name": "Sustainability & Climate Institute", "action": "Leverage location and programs for interdisciplinary climate research center", "investment": "Medium"},
-            {"name": "Experiential Learning Model", "action": "Rebrand FLC as the premier outdoor experiential learning institution nationally", "investment": "Medium"},
-            {"name": "Program Portfolio Restructuring", "action": "Consolidate/transform Concern-quadrant humanities into interdisciplinary programs", "investment": "Medium"},
+            {"name": "Indigenous Education Hub", "action": "National center for Indigenous higher education \u2014 framed through statutory obligations and cultural preservation (not DEI)", "investment": "High"},
+            {"name": "Experiential Learning Model", "action": "Position FLC as premier outdoor experiential institution; differentiate from online competitors", "investment": "Medium"},
+            {"name": "Graduate Certificate Development", "action": "Defensible niche only (tribal governance, outdoor ed leadership). Generic MBA/MEd is a losing strategy. Timeline: 2\u20133+ years.", "investment": "Medium"},
+            {"name": "Program Portfolio Restructuring", "action": "Consolidate small declining majors into interdisciplinary programs; requires faculty governance buy-in (1\u20132+ years)", "investment": "Medium"},
         ],
     },
 }
@@ -887,303 +1037,296 @@ ZONE_CROSS_REFERENCES = {
     # ── Performance Zone ──
     "Business Administration": {
         "supporting": [
-            {"text": "Strong Star Programs (298 enrolled, +4% growth)", "source": "SWOT Strength (Phase 2)"},
-            {"text": "Recommended to GROW — highest market score among programs", "source": "Gray Associates (Phase 1)"},
-            {"text": "Star quadrant: high SCH share + positive growth", "source": "BCG Matrix (Phase 1)"},
-            {"text": "Strong Employment Score (85/100)", "source": "Gray Associates (Phase 1)"},
+            {"text": "BCG Star: 325 enrolled, +10% growth, +30 students (largest absolute gain)", "source": "BCG Matrix (48-major)"},
+            {"text": "Gray Associates GROW \u2014 highest market score (74), strong employment (85)", "source": "Gray Associates"},
         ],
         "risks": [
-            {"text": "Intensifying Online Competition — large universities erode geographic advantage", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Student Price Sensitivity — bargaining power 4.0/5", "source": "Porter's Five Forces (Phase 1)"},
-            {"text": "Rising tuition sensitivity among families", "source": "PESTLE Economic (Phase 1)"},
-        ],
-    },
-    "Psychology": {
-        "supporting": [
-            {"text": "Strong Star Programs (227 enrolled, +3% growth)", "source": "SWOT Strength (Phase 2)"},
-            {"text": "Recommended to GROW — strong student demand (85/100)", "source": "Gray Associates (Phase 1)"},
-            {"text": "Star quadrant: growing market share", "source": "BCG Matrix (Phase 1)"},
-        ],
-        "risks": [
-            {"text": "Intensifying Online Competition — psychology widely available online", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Alternative Credential Growth — employers accepting non-degree pathways", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Competitive Rivalry 4.5/5 — intense competition from CU/CSU system", "source": "Porter's Five Forces (Phase 1)"},
-        ],
-    },
-    "Engineering": {
-        "supporting": [
-            {"text": "Strong Employment-Aligned Programs (Employment Score 92/100)", "source": "SWOT Strength (Phase 2)"},
-            {"text": "Recommended to GROW — highest employment score of all programs", "source": "Gray Associates (Phase 1)"},
-            {"text": "Expand High-Demand Programs identified as key opportunity", "source": "SWOT Opportunity (Phase 2)"},
-        ],
-        "risks": [
-            {"text": "Remote Location Faculty Recruitment — specialized faculty scarcity increasing", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "Supplier Power Medium-High (3.5/5) — Durango cost of living challenges", "source": "Porter's Five Forces (Phase 1)"},
-            {"text": "High competition score (55) limits market differentiation", "source": "Gray Associates (Phase 1)"},
-        ],
-    },
-    "Health Sciences": {
-        "supporting": [
-            {"text": "Expand High-Demand Programs — Health Sciences identified for GROW", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Graduate Program Expansion — grad cert immediate opportunity", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Employment Score 85/100, Market Score 76/100", "source": "Gray Associates (Phase 1)"},
-        ],
-        "risks": [
-            {"text": "Limited Online Program Offerings — only 25 courses limits reach", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "Declining College-Going Rates — national trend hits all programs", "source": "PESTLE Social (Phase 1)"},
-            {"text": "Accreditation compliance requirements for clinical programs", "source": "PESTLE Legal (Phase 1)"},
-        ],
-    },
-    "Computer Information Systems": {
-        "supporting": [
-            {"text": "AI Institute Development — emerging strength in high-demand field", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Strong Employment-Aligned Programs (CIS Employment Score 90/100)", "source": "SWOT Strength (Phase 2)"},
-            {"text": "Recommended to GROW — strong market + economics scores", "source": "Gray Associates (Phase 1)"},
-            {"text": "AI disruption creates curriculum demand", "source": "PESTLE Technological (Phase 1)"},
-        ],
-        "risks": [
-            {"text": "Alternative Credential Growth — boot camps and certificates in tech", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Threat of Substitutes 3.5/5 — micro-credentials growing rapidly", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Student price sensitivity HIGH; tuition cap at 3.5%", "source": "PESTLE Economic / Porter's"},
+            {"text": "Online competition assumed but unverified for FLC students", "source": "Porter's Five Forces"},
         ],
     },
     "Exercise Physiology": {
         "supporting": [
-            {"text": "Expand High-Demand Programs — Exercise Physiology recommended to GROW", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Employment Score 80/100, strong career alignment", "source": "Gray Associates (Phase 1)"},
-            {"text": "Outdoor Recreation & Location Differentiator enhances program appeal", "source": "SWOT Strength (Phase 2)"},
+            {"text": "BCG Star: 160 enrolled, +17% growth, +23 students", "source": "BCG Matrix (48-major)"},
+            {"text": "Gray Associates GROW \u2014 employment score 80, strong career alignment", "source": "Gray Associates"},
+            {"text": "Place-based brand and outdoor differentiation enhance program appeal", "source": "SWOT Strength"},
         ],
         "risks": [
-            {"text": "Declining Undergraduate Enrollment — overall -13.6% over 10 years", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "Student Price Sensitivity — rising tuition concerns", "source": "PESTLE Economic (Phase 1)"},
+            {"text": "Overall enrollment declining -3.1%; pressure on all programs", "source": "BCG Matrix / Institutional Data"},
+        ],
+    },
+    "Environmental Conservation & Mgmt": {
+        "supporting": [
+            {"text": "BCG Star: 133 enrolled, +62% growth, +51 students (second-largest absolute gain)", "source": "BCG Matrix (48-major)"},
+            {"text": "Aligns with regional economy and sustainability demand", "source": "PESTLE Economic/Environmental"},
+        ],
+        "risks": [
+            {"text": "Climate vulnerability \u2014 wildfire/drought may erode outdoor brand assets", "source": "PESTLE Environmental"},
+        ],
+    },
+    "Engineering": {
+        "supporting": [
+            {"text": "Gray Associates GROW \u2014 highest employment score (92/100)", "source": "Gray Associates"},
+            {"text": "Healthcare and STEM show strongest regional job demand", "source": "PESTLE Economic"},
+        ],
+        "risks": [
+            {"text": "Durango recruitment challenge for specialized engineering faculty (tight labor market)", "source": "Porter's / PESTLE Economic"},
+        ],
+    },
+    "Health Sciences": {
+        "supporting": [
+            {"text": "BCG Star: 86 enrolled, +69% growth, +35 students", "source": "BCG Matrix (48-major)"},
+            {"text": "Healthcare sector strongest regional employer demand", "source": "PESTLE Economic"},
+            {"text": "Gray Associates GROW \u2014 employment score 85, market score 76", "source": "Gray Associates"},
+        ],
+        "risks": [
+            {"text": "Clinical program accreditation adds compliance complexity", "source": "PESTLE Legal"},
+        ],
+    },
+    "Computer Information Systems": {
+        "supporting": [
+            {"text": "BCG Star: 77 enrolled, +13% growth", "source": "BCG Matrix (48-major)"},
+            {"text": "AI Institute alignment creates curriculum synergy", "source": "SWOT Opportunity"},
+            {"text": "Gray Associates GROW \u2014 employment score 90", "source": "Gray Associates"},
+        ],
+        "risks": [
+            {"text": "Alternative credentials (boot camps) compete in tech space", "source": "SWOT Threat / Porter's"},
         ],
     },
     # ── Productivity Zone ──
-    "Advising System Overhaul": {
-        "supporting": [
-            {"text": "Retention Below National Average (66.1% vs 73%) — advising directly addresses gap", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "Data analytics for student success and retention identified as need", "source": "PESTLE Technological (Phase 1)"},
-            {"text": "First-Gen students (43%) need additional support infrastructure", "source": "PESTLE Social (Phase 1)"},
-        ],
-        "risks": [
-            {"text": "State Funding Volatility — may constrain technology investment", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Technology infrastructure upgrade needs compete for same funds", "source": "PESTLE Technological (Phase 1)"},
-        ],
-    },
     "Retention Programs": {
         "supporting": [
-            {"text": "Retention Below National Average — First-Gen 60.9%, Pell 61.7%, Students of Color 62.6%", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "Declining college-going rates make retention more critical than recruitment", "source": "PESTLE Social (Phase 1)"},
-            {"text": "State performance-based funding models reward retention improvement", "source": "PESTLE Political (Phase 1)"},
+            {"text": "66.1% retention vs ~73% national avg; First-Gen 60.9%, Pell 61.7%", "source": "SWOT Weakness / Institutional Data"},
+            {"text": "Declining college-going rates make retention more critical than recruitment", "source": "PESTLE Social"},
+            {"text": "First-gen support is politically safe framing (not identity-based)", "source": "PESTLE Political / SWOT Opportunity"},
         ],
         "risks": [
-            {"text": "Declining Undergraduate Enrollment — fewer students to retain", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "Political Pressure on DEI & Public Higher Ed — may affect equity programs", "source": "SWOT Threat (Phase 2)"},
+            {"text": "DEI scrutiny may affect equity-framed retention programs; use first-gen framing", "source": "SWOT Threat / PESTLE Political"},
         ],
     },
-    "IT Infrastructure": {
+    "Advising System Overhaul": {
         "supporting": [
-            {"text": "AI Institute Development — requires robust technology platform", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Need for technology infrastructure upgrades identified", "source": "PESTLE Technological (Phase 1)"},
-            {"text": "Online/hybrid program delivery expectations growing", "source": "PESTLE Technological (Phase 1)"},
+            {"text": "AI-enabled advising and early alerts identified as viable technology investment", "source": "PESTLE Technological"},
+            {"text": "Retention gap directly addressable through proactive advising", "source": "SWOT Weakness"},
         ],
         "risks": [
-            {"text": "State Funding Volatility — capital expenditure at risk", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Technology vendor dependency rated Moderate", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "FERPA compliance critical for AI tools processing student data", "source": "PESTLE Legal"},
+            {"text": "State funding volatility may constrain technology investment", "source": "SWOT Threat"},
         ],
     },
     "Faculty Recruitment Package": {
         "supporting": [
-            {"text": "Small Class Sizes & Faculty Quality — 98% terminal degrees, 15:1 ratio", "source": "SWOT Strength (Phase 2)"},
-            {"text": "Faculty quality is a core differentiator worth protecting", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "National faculty supply HIGH in most fields \u2014 issue is Durango, not supply", "source": "Porter's Five Forces (corrected)"},
+            {"text": "Small class sizes and teaching focus are core differentiators worth protecting", "source": "SWOT Strength"},
         ],
         "risks": [
-            {"text": "Remote Location Faculty Recruitment — Durango cost of living and isolation", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "Supplier Power Medium-High (3.5/5) — salary competitiveness below average", "source": "Porter's Five Forces (Phase 1)"},
-            {"text": "Durango cost of living affecting recruitment rated High and Increasing", "source": "PESTLE Economic (Phase 1)"},
+            {"text": "Durango housing crisis + below-avg salary = persistent recruitment barrier", "source": "SWOT Weakness / PESTLE Economic"},
+            {"text": "Nursing, CS, engineering have genuinely tight labor markets", "source": "Porter's Five Forces"},
         ],
     },
     "Transfer Pathway Optimization": {
         "supporting": [
-            {"text": "Dual Enrollment Pipeline Growth — 52 to 235 students (4.5x increase)", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Expand dual enrollment pipeline identified as economic opportunity", "source": "PESTLE Economic (Phase 1)"},
-            {"text": "Community college pathways rated Strong and Increasing", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Dual enrollment grew 4.5x (52\u2192235); 27 converted to degree-seeking FY25", "source": "SWOT Opportunity / Institutional Data"},
+            {"text": "Community college pathways are a low-risk growth channel", "source": "Porter's Five Forces"},
         ],
         "risks": [
-            {"text": "Competitive Rivalry 4.5/5 — CU/CSU also competing for transfer students", "source": "Porter's Five Forces (Phase 1)"},
-            {"text": "Community college expansion as Threat of New Entrants", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "CU/CSU also competing for transfer students", "source": "Porter's Five Forces"},
         ],
     },
     "Marketing & Communications": {
         "supporting": [
-            {"text": "Outdoor Recreation & Location Differentiator — powerful recruitment message", "source": "SWOT Strength (Phase 2)"},
-            {"text": "Unique Native American Mission — distinctive institutional identity", "source": "SWOT Strength (Phase 2)"},
-            {"text": "FLC experiential differentiation rated Strong", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Place-based brand is FLC's strongest competitive moat", "source": "SWOT Strength / Porter's"},
+            {"text": "Must use statutory/sovereign framing for Indigenous recruitment, not DEI language", "source": "PESTLE Political/Legal"},
         ],
         "risks": [
-            {"text": "Declining College-Going Rates — shrinking prospect pool nationally", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Information transparency High and Increasing — students compare easily", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Declining college-going rates = shrinking prospect pool", "source": "SWOT Threat / PESTLE Social"},
+        ],
+    },
+    "Program Review Process": {
+        "supporting": [
+            {"text": "17 of 48 majors in Concern quadrant (small & declining)", "source": "BCG Matrix (48-major)"},
+            {"text": "Gray Associates identifies EVALUATE/SUNSET programs for structured review", "source": "Gray Associates"},
+        ],
+        "risks": [
+            {"text": "Faculty governance resistance expected; process takes 1\u20132+ years", "source": "SWOT Threat / Institutional Priorities"},
+            {"text": "NAIS is mission-critical \u2014 must NEVER be evaluated on enrollment metrics alone", "source": "SWOT Context"},
         ],
     },
     # ── Incubation Zone ──
     "AI Institute Expansion": {
         "supporting": [
-            {"text": "AI Institute Development — emerging strength in high-demand field", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "AI disruption in curriculum and pedagogy creates demand", "source": "PESTLE Technological (Phase 1)"},
-            {"text": "AI Institute at FLC identified as emerging institutional strength", "source": "PESTLE Technological (Phase 1)"},
+            {"text": "AI Institute is emerging institutional strength in high-demand field", "source": "SWOT Opportunity / PESTLE Technological"},
+            {"text": "AI literacy across all disciplines is a viable differentiator", "source": "PESTLE Technological"},
         ],
         "risks": [
-            {"text": "Remote Location Faculty Recruitment — specialized AI faculty scarce", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "Alternative Credential Growth — tech boot camps compete in AI space", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Threat of New Entrants 3.5/5 — online programs launching rapidly in AI", "source": "Porter's Five Forces (Phase 1)"},
-        ],
-    },
-    "Online Degree Programs": {
-        "supporting": [
-            {"text": "Graduate Program Expansion — 16x growth demonstrates scaling capacity", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Growing demand for flexible/hybrid learning nationally", "source": "PESTLE Social (Phase 1)"},
-            {"text": "Online graduate program expansion identified as tech opportunity", "source": "PESTLE Technological (Phase 1)"},
-        ],
-        "risks": [
-            {"text": "Limited Online Program Offerings — only 25 courses currently, significant build needed", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "Intensifying Online Competition — large universities dominate online market", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Online degree program growth rated Rapid and Increasing by competitors", "source": "Porter's Five Forces (Phase 1)"},
-        ],
-    },
-    "Micro-Credentials & Badges": {
-        "supporting": [
-            {"text": "Workforce-aligned certificates identified as economic opportunity", "source": "PESTLE Economic (Phase 1)"},
-            {"text": "Expand High-Demand Programs — stackable credentials complement degrees", "source": "SWOT Opportunity (Phase 2)"},
-        ],
-        "risks": [
-            {"text": "Alternative Credential Growth — micro-credential market increasingly crowded", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Micro-credential adoption Growing and Increasing across competitors", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Specialized AI faculty face tight labor market + Durango recruitment barrier", "source": "Porter's / PESTLE Economic"},
+            {"text": "Tech boot camps and online AI certificates compete in this space", "source": "SWOT Threat"},
         ],
     },
     "Dual Enrollment Expansion": {
         "supporting": [
-            {"text": "Dual Enrollment Pipeline Growth — 4.5x increase, 27 converted FY25", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Expand dual enrollment pipeline for revenue diversification", "source": "PESTLE Economic (Phase 1)"},
+            {"text": "Proven 4.5x growth track record; low-risk pipeline", "source": "SWOT Opportunity / Institutional Data"},
+            {"text": "Partnerships with Pueblo CC, San Juan College viable", "source": "PESTLE Economic"},
         ],
         "risks": [
-            {"text": "Community college expansion rated Active and Increasing", "source": "Porter's Five Forces (Phase 1)"},
-            {"text": "Declining College-Going Rates — smaller prospect pool even for dual enrollment", "source": "PESTLE Social (Phase 1)"},
+            {"text": "Community college expansion could compete for same students", "source": "Porter's Five Forces"},
         ],
     },
-    "Workforce Development Partnerships": {
+    "Workforce Certificates": {
         "supporting": [
-            {"text": "Strong Employment-Aligned Programs — Engineering, CIS, Business, Health Sciences", "source": "SWOT Strength (Phase 2)"},
-            {"text": "Economic diversification in Four Corners region creates employer demand", "source": "PESTLE Economic (Phase 1)"},
-            {"text": "Employer credential acceptance rated Expanding", "source": "Porter's Five Forces (Phase 1)"},
+            {"text": "Healthcare and outdoor recreation sectors have regional employer demand", "source": "PESTLE Economic"},
+            {"text": "Micro-credentials can complement (not replace) degree programs", "source": "SWOT Opportunity"},
         ],
         "risks": [
-            {"text": "Alternative Credential Growth — employers may prefer non-degree credentials", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Remote location limits corporate partnership pool", "source": "PESTLE Economic (Phase 1)"},
+            {"text": "Must complement not cannibalize existing degree programs", "source": "Zone to Win Context"},
+            {"text": "Credential market increasingly crowded", "source": "Porter's (Substitutes)"},
+        ],
+    },
+    "Healthcare Pipeline": {
+        "supporting": [
+            {"text": "Healthcare sector showing strongest regional job growth", "source": "PESTLE Economic"},
+            {"text": "Health Sciences is a BCG Star (+69%, 86 enrolled)", "source": "BCG Matrix (48-major)"},
+        ],
+        "risks": [
+            {"text": "Clinical program accreditation and faculty recruitment in nursing are barriers", "source": "PESTLE Legal / Porter's"},
+        ],
+    },
+    "Online Program Pilot": {
+        "supporting": [
+            {"text": "Indigenous-niche online (tuition waiver moat) is only defensible online strategy", "source": "Zone to Win Context"},
+        ],
+        "risks": [
+            {"text": "SATURATED market: ASU/SNHU/WGU spend $50M+ on marketing", "source": "PESTLE Technological"},
+            {"text": "FLC has NO online brand; ~25 courses (~10%); 1\u20132yr governance to launch", "source": "SWOT Weakness / PESTLE Technological"},
+            {"text": "Building 'traditional' online programs invests in yesterday's model", "source": "PESTLE Technological Context"},
         ],
     },
     # ── Transformation Zone ──
     "Indigenous Education Hub": {
         "supporting": [
-            {"text": "Unique Native American Mission — federal obligation, 166 tribes, 37% waiver", "source": "SWOT Strength (Phase 2)"},
-            {"text": "Indigenous Education National Leadership — premier institution opportunity", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Leverage federal tribal education funding", "source": "PESTLE Political (Phase 1)"},
-            {"text": "Tribal sovereignty considerations enable unique partnerships", "source": "PESTLE Legal (Phase 1)"},
+            {"text": "Statutory mission: CRS 23-52-105 (since 1911), 166 tribes, 37% waiver", "source": "SWOT Strength / PESTLE Legal"},
+            {"text": "Indigenous education opportunity IS REAL and demographically sound", "source": "PESTLE Social"},
+            {"text": "NATW has distinct legal basis (CRS 23-52-105, federal-state contract) separate from DEI", "source": "PESTLE Legal"},
         ],
         "risks": [
-            {"text": "Political Pressure on DEI & Public Higher Ed — uncertainty for diversity programs", "source": "SWOT Threat (Phase 2)"},
-            {"text": "Tuition Waiver Revenue Impact — 37% receive waiver, affects revenue model", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "State Funding Volatility — declining appropriations per student", "source": "PESTLE Economic (Phase 1)"},
-        ],
-    },
-    "Sustainability & Climate Institute": {
-        "supporting": [
-            {"text": "Sustainability & Environmental Leadership — Durango setting + strong programs", "source": "SWOT Opportunity (Phase 2)"},
-            {"text": "Environmental Conservation & Mgmt (133 enrolled) + Environmental Science (87)", "source": "Gray Associates (Phase 1)"},
-            {"text": "Position as leader in sustainability education", "source": "PESTLE Environmental (Phase 1)"},
-            {"text": "Climate resilience research opportunities identified", "source": "PESTLE Environmental (Phase 1)"},
-        ],
-        "risks": [
-            {"text": "Climate change impacts on Durango/mountain region — wildfire risk", "source": "PESTLE Environmental (Phase 1)"},
-            {"text": "Environment & Sustainability dept in Concern quadrant (-8% change)", "source": "BCG Matrix (Phase 1)"},
+            {"text": "Must use statutory/cultural preservation framing, NOT DEI language", "source": "PESTLE Political / SWOT Context"},
+            {"text": "Tribal education funding VOLATILE: +109% then proposed -24%", "source": "PESTLE Political"},
+            {"text": "NATW could be misclassified as DEI by federal investigators", "source": "SWOT Threat / PESTLE Legal"},
         ],
     },
     "Experiential Learning Model": {
         "supporting": [
-            {"text": "Outdoor Recreation & Location Differentiator — online competitors cannot replicate", "source": "SWOT Strength (Phase 2)"},
-            {"text": "FLC experiential differentiation rated Strong and Stable", "source": "Porter's Five Forces (Phase 1)"},
-            {"text": "Adventure Education uniquely positioned (High Mission Alignment)", "source": "Gray Associates (Phase 1)"},
-            {"text": "Technology-enhanced experiential learning opportunity", "source": "PESTLE Technological (Phase 1)"},
+            {"text": "Place-based brand is strongest competitive moat vs online competitors", "source": "SWOT Strength / Porter's"},
+            {"text": "Adventure Education (+12%, 77 enrolled) is a BCG Star", "source": "BCG Matrix (48-major)"},
         ],
         "risks": [
-            {"text": "Adventure Education in Concern quadrant (-10% change)", "source": "BCG Matrix (Phase 1)"},
-            {"text": "Outdoor recreation economy dependency on climate conditions", "source": "PESTLE Environmental (Phase 1)"},
+            {"text": "Climate vulnerability: wildfire smoke, drought, variable snowpack", "source": "PESTLE Environmental"},
+        ],
+    },
+    "Graduate Certificate Development": {
+        "supporting": [
+            {"text": "Graduate enrollment grew 10\u2192160 (16x), demonstrating scaling capacity", "source": "SWOT Strength / Institutional Data"},
+        ],
+        "risks": [
+            {"text": "FLC has ONE grad program; new programs need 1\u20132+ years governance", "source": "Budget Constraints"},
+            {"text": "Generic MBA/MEd markets saturated; only defensible niches viable", "source": "SWOT Context / PESTLE Technological"},
+            {"text": "Online grad market dominated by ASU/SNHU/WGU with massive scale", "source": "PESTLE Technological"},
         ],
     },
     "Program Portfolio Restructuring": {
         "supporting": [
-            {"text": "Multiple Concern-Quadrant Programs identified for action", "source": "SWOT Weakness (Phase 2)"},
-            {"text": "TRANSFORM: English and Math — weak market but strong economics, innovate delivery", "source": "Gray Associates (Phase 1)"},
-            {"text": "High-SCH Cash Cow Programs — restructuring can preserve SCH generation", "source": "SWOT Strength (Phase 2)"},
+            {"text": "17 Concern-quadrant majors; Economics (-76%), MND Art (-98%), Public Health (-57%)", "source": "BCG Matrix (48-major)"},
+            {"text": "TRANSFORM: English and Math have strong economics (service courses) despite low Market Score", "source": "Gray Associates"},
         ],
         "risks": [
-            {"text": "9 Concern-quadrant departments with steep declines (up to -26%)", "source": "BCG Matrix (Phase 1)"},
-            {"text": "EVALUATE/SUNSET: Political Science, Philosophy, Art & Design need strategic review", "source": "Gray Associates (Phase 1)"},
-            {"text": "Declining Undergraduate Enrollment — -13.6% limits restructuring options", "source": "SWOT Weakness (Phase 2)"},
+            {"text": "Faculty governance takes 1\u20132+ years; resistance is default assumption", "source": "SWOT Threat / SWOT Context"},
+            {"text": "NAIS is mission-critical and MUST NOT be recommended for reduction", "source": "SWOT Context"},
         ],
     },
 }
 
 # Three Strategic Scenarios
 SCENARIOS = {
-    "Optimistic": {
-        "description": "Favorable market conditions, successful execution of all strategic initiatives, and strong institutional and state support.",
+    "Incremental": {
+        "description": "Low-risk strategy that builds on current strengths. Focuses on stabilizing enrollment through retention gains, protecting high-performing programs, and improving operational efficiency. No major new ventures.",
         "color": "#2ecc71",
-        "enrollment_target": 3800,
-        "retention_target": 75.0,
-        "graduate_target": 250,
-        "online_courses": 80,
-        "new_programs": 5,
+        "enrollment_target": 3450,
+        "retention_target": 68.0,
+        "graduate_target": 170,
+        "online_courses": 30,
+        "new_programs": 0,
         "assumptions": [
-            "State funding increases 3-5% annually",
-            "Successful launch of 3+ online degree programs",
-            "AI Institute secures major grant funding",
-            "Retention interventions close equity gaps by 50%",
-            "Dual enrollment pipeline exceeds 350 students",
+            "State funding flat (0-1% change); FY2026 appropriations likely down",
+            "No new degree programs launched — focus on strengthening existing portfolio",
+            "Retention interventions (Compass, advising redesign) yield 2 pp gain",
+            "Dual enrollment grows modestly to 260-270 students",
+            "Faculty governance limits prevent structural changes in Year 1",
         ],
-        "zone_allocation": {"Performance": 40, "Productivity": 25, "Incubation": 20, "Transformation": 15},
+        "zone_allocation": {"Performance": 50, "Productivity": 30, "Incubation": 10, "Transformation": 10},
+        "strategic_bet": "Retention and operational efficiency — stabilize before expanding",
+        "risk_level": "Low",
+        "success_probability": "High (70-80%)",
+        "investment_needs": "Minimal new investment; reallocation of existing resources",
+        "zone_recommendations": {
+            "Performance": "Invest in BCG Stars (Business Admin, Exercise Physiology, Psychology). Protect mission-critical programs (NAIS). Begin structured review of 17 Concern-quadrant majors.",
+            "Productivity": "Redesign advising model per NACADA review. Optimize course scheduling. Address Durango housing recruitment barrier with signing incentives.",
+            "Incubation": "AI Institute continues at current scale. Dual enrollment expands with existing partners. No new online programs.",
+            "Transformation": "Feasibility study only — Indigenous Education Hub concept paper. No large capital commitments.",
+        },
     },
-    "Most Likely": {
-        "description": "Realistic constraints with incremental progress on initiatives, moderate state support, and steady but competitive market conditions.",
+    "Moderate-Adaptive": {
+        "description": "Balanced strategy with selective investment in differentiated strengths. Invests in Indigenous education (statutorily grounded), experiential learning brand, and targeted workforce alignment while protecting core programs.",
         "color": "#f39c12",
         "enrollment_target": 3550,
         "retention_target": 70.0,
-        "graduate_target": 200,
-        "online_courses": 50,
-        "new_programs": 3,
-        "assumptions": [
-            "State funding flat or slight increase (0-2%)",
-            "1-2 online programs launched successfully",
-            "AI Institute grows but external funding uncertain",
-            "Retention improves incrementally (2-3 pp)",
-            "Dual enrollment grows to 280-300 students",
-        ],
-        "zone_allocation": {"Performance": 45, "Productivity": 30, "Incubation": 15, "Transformation": 10},
-    },
-    "Conservative": {
-        "description": "Challenging conditions including potential funding cuts, continued enrollment pressure, and increased competition, while maintaining core institutional strengths.",
-        "color": "#e74c3c",
-        "enrollment_target": 3300,
-        "retention_target": 67.0,
-        "graduate_target": 170,
+        "graduate_target": 180,
         "online_courses": 35,
         "new_programs": 1,
         "assumptions": [
-            "State funding decreases 2-5%",
-            "Online competition intensifies significantly",
-            "Limited resources for new program launches",
-            "Focus on protecting core programs and retention",
-            "Accelerate program sunset reviews for cost savings",
+            "State funding flat to slight decrease; supplemented by targeted grant revenue",
+            "Indigenous education initiatives framed through statutory obligations attract federal/foundation support",
+            "One new graduate certificate launched in existing program area (leverages current faculty)",
+            "Retention improvements of 3-4 pp through scaled Compass program and early-alert systems",
+            "Dual enrollment pipeline reaches 290-310 students through 3+ school partnerships",
         ],
-        "zone_allocation": {"Performance": 50, "Productivity": 35, "Incubation": 10, "Transformation": 5},
+        "zone_allocation": {"Performance": 45, "Productivity": 25, "Incubation": 15, "Transformation": 15},
+        "strategic_bet": "Indigenous education differentiation + experiential learning brand",
+        "risk_level": "Medium",
+        "success_probability": "Moderate (50-65%)",
+        "investment_needs": "Moderate — marketing investment for Indigenous programs, one new certificate development, advising technology",
+        "zone_recommendations": {
+            "Performance": "Invest in Stars, sunset-review lowest-enrollment Concern programs, grow Healthcare and Engineering pipelines. Begin faculty realignment discussions.",
+            "Productivity": "Scale Compass retention program. Implement early-alert system. Launch Durango faculty housing partnership. Streamline program review process.",
+            "Incubation": "AI Institute pursues NSF/foundation grants. Dual enrollment expands to 3+ high schools. Pilot one workforce certificate aligned with regional demand. Indigenous online course pilot (small scale, NATW niche only).",
+            "Transformation": "Launch Indigenous Education Hub initiative (statutory/sovereign framing, not DEI). Develop experiential learning as core brand differentiator. Begin graduate certificate feasibility in defensible niche.",
+        },
+    },
+    "Disruptive": {
+        "description": "Bold repositioning strategy that restructures FLC's academic portfolio and identity. Pursues Indigenous online niche nationally, workforce credentials, and significant program consolidation. Highest potential reward but requires substantial political capital and investment.",
+        "color": "#e74c3c",
+        "enrollment_target": 3700,
+        "retention_target": 72.0,
+        "graduate_target": 200,
+        "online_courses": 45,
+        "new_programs": 3,
+        "assumptions": [
+            "State funding declines but offset by new revenue streams (grants, workforce partnerships, tuition from national Indigenous student recruitment)",
+            "Significant marketing investment ($200K+) for national Indigenous online student recruitment",
+            "Faculty governance navigated through president's political capital and shared governance engagement",
+            "3-5 low-enrollment programs consolidated or restructured (requires 12-18 months governance process)",
+            "Workforce credential partnerships secured with regional employers (healthcare, energy, outdoor industry)",
+        ],
+        "zone_allocation": {"Performance": 35, "Productivity": 20, "Incubation": 20, "Transformation": 25},
+        "strategic_bet": "Institutional repositioning — Indigenous education leader + workforce alignment + portfolio restructuring",
+        "risk_level": "High",
+        "success_probability": "Lower (30-45%) — depends on governance buy-in, marketing effectiveness, and external funding",
+        "investment_needs": "Significant — marketing ($200K+), new program development, faculty buyouts/realignment, technology infrastructure",
+        "zone_recommendations": {
+            "Performance": "Aggressively invest in Stars. Consolidate or restructure 5+ Concern programs. Reallocate faculty lines from declining to growing programs. Protect NAIS regardless of enrollment.",
+            "Productivity": "Full advising redesign. Implement predictive analytics for retention. Faculty recruitment overhaul with Durango housing solutions. Administrative consolidation across small departments.",
+            "Incubation": "AI Institute scales with external funding. Launch 2-3 workforce certificates (healthcare, outdoor industry, AI/tech). Indigenous online programs expand beyond pilot. Dual enrollment targets 350+ students.",
+            "Transformation": "Indigenous Education Hub becomes national brand (statutory NATW mission as moat). Launch sub-baccalaureate workforce credentials. Graduate certificates in 2 defensible niches. Complete program portfolio restructuring aligned with labor market demand.",
+        },
     },
 }
 
@@ -1197,19 +1340,19 @@ ROADMAP_MILESTONES = pd.DataFrame({
         "Phase 1 Framework Analyses Complete",
         "SWOT Synthesis Delivered to Provost",
         "Zone to Win Scenarios Presented to Board",
-        "Program Sunset Review Initiated (Concern programs)",
-        "Retention Intervention Pilot Launched",
-        "Online Program Task Force Established",
+        "Program Sunset Review Initiated (17 Concern-quadrant majors)",
+        "Retention Intervention Pilot Launched (Compass expansion)",
+        "Dual Enrollment Expansion Agreements (3+ high schools)",
         "AI Institute Partnership MOU Signed",
-        "Dual Enrollment Expansion Agreements (3 schools)",
-        "Faculty Recruitment Incentive Package Approved",
-        "Business Admin Online MBA Proposal Submitted",
+        "Indigenous Education Hub Feasibility Study Complete",
+        "Faculty Recruitment Incentive Package Approved (Durango housing)",
+        "Advising Redesign Implementation (NACADA recommendations)",
         "Q1 KPI Review & Course Correction",
-        "Indigenous Education Hub Feasibility Study",
-        "Sustainability Institute Concept Paper",
+        "Workforce Certificate Feasibility (regional demand analysis)",
+        "Graduate Certificate Proposal (existing program area)",
         "Mid-Year Strategic Progress Report",
-        "Program Restructuring Plans Finalized",
-        "Year 1 Online Program Enrollment Results",
+        "Program Restructuring Plans Through Faculty Governance",
+        "Early-Alert Retention System Deployed",
         "Budget Reallocation Based on Zone Performance",
         "Year 1 Comprehensive Implementation Review",
         "Year 2 Strategic Plan Refinement",
@@ -1223,87 +1366,100 @@ ROADMAP_MILESTONES = pd.DataFrame({
     ],
     "Start_Date": [
         "2025-09-01", "2025-12-01", "2026-01-15", "2026-02-01", "2026-02-01",
-        "2026-02-15", "2026-03-01", "2026-03-15", "2026-03-01", "2026-04-01",
-        "2026-04-01", "2026-04-15", "2026-05-01", "2026-06-01", "2026-06-15",
-        "2026-09-15", "2026-10-01", "2026-12-01", "2027-01-15", "2027-06-01",
+        "2026-02-15", "2026-03-01", "2026-03-01", "2026-03-01", "2026-04-01",
+        "2026-04-01", "2026-05-01", "2026-05-01", "2026-06-01", "2026-06-01",
+        "2026-08-01", "2026-10-01", "2026-12-01", "2027-01-15", "2027-06-01",
     ],
     "Target_Date": [
-        "2025-12-15", "2026-01-15", "2026-02-01", "2026-05-01", "2026-03-01",
-        "2026-03-15", "2026-06-01", "2026-05-15", "2026-05-01", "2026-06-01",
-        "2026-04-30", "2026-08-01", "2026-08-01", "2026-07-01", "2026-08-15",
-        "2026-11-01", "2026-11-15", "2027-01-15", "2027-03-01", "2027-07-01",
+        "2025-12-15", "2026-01-15", "2026-02-01", "2026-06-01", "2026-04-01",
+        "2026-05-15", "2026-06-01", "2026-08-01", "2026-06-01", "2026-08-01",
+        "2026-04-30", "2026-09-01", "2026-10-01", "2026-07-01", "2027-02-01",
+        "2026-10-15", "2026-11-15", "2027-01-15", "2027-03-01", "2027-07-01",
     ],
     "Status": [
         "Complete", "Complete", "In Progress", "In Progress", "In Progress",
-        "In Progress", "Not Started", "Not Started", "Not Started", "Not Started",
+        "Not Started", "Not Started", "Not Started", "Not Started", "Not Started",
         "Upcoming", "Not Started", "Not Started", "Upcoming", "Not Started",
-        "Upcoming", "Upcoming", "Upcoming", "Upcoming", "Upcoming",
+        "Not Started", "Upcoming", "Upcoming", "Upcoming", "Upcoming",
     ],
     "Zone": [
         "All", "All", "All", "Performance", "Productivity",
-        "Incubation", "Incubation", "Incubation", "Productivity", "Performance",
-        "All", "Transformation", "Transformation", "All", "Performance",
-        "Incubation", "All", "All", "All", "All",
+        "Incubation", "Incubation", "Transformation", "Productivity", "Productivity",
+        "All", "Incubation", "Performance", "All", "Performance",
+        "Productivity", "All", "All", "All", "All",
     ],
     "Owner": [
         "Consulting Team", "Provost", "Provost/President", "Provost", "VP Student Affairs",
-        "VP Academic Affairs", "AI Institute Director", "VP Enrollment", "VP Academic Affairs", "Dean of Business",
-        "Provost", "Provost", "Dean of Sciences", "Provost", "Provost",
-        "VP Academic Affairs", "CFO/Provost", "President/Provost", "Provost", "President",
+        "VP Enrollment", "AI Institute Director", "Provost", "VP Academic Affairs", "VP Student Affairs",
+        "Provost", "VP Academic Affairs", "Dean/Provost", "Provost", "Provost/Faculty Senate",
+        "VP Student Affairs", "CFO/Provost", "President/Provost", "Provost", "President",
     ],
 })
 
 ROADMAP_KPIS = pd.DataFrame({
     "KPI": [
         "Total Enrollment", "FTFT Retention Rate", "Graduate Enrollment",
-        "First-Year Class Size", "Degrees Awarded", "Online Course Offerings",
-        "Dual Enrollment Students", "Transfer Students",
+        "First-Year Class Size", "Dual Enrollment Students", "Transfer Students",
         "First-Gen Retention Gap", "Native American Retention Rate",
-        "Programs in Grow/Sustain Status", "Program Completion Rate",
+        "Programs in Grow/Sustain Status", "Concern Programs Under Review",
+        "Degrees Awarded", "Program Completion Rate",
     ],
     "Category": [
         "Enrollment", "Retention", "Enrollment", "Enrollment",
-        "Outcomes", "Growth", "Growth", "Enrollment",
-        "Equity", "Equity", "Portfolio Health", "Outcomes",
+        "Growth Pipeline", "Growth Pipeline",
+        "Equity", "Equity",
+        "Portfolio Health", "Portfolio Health",
+        "Outcomes", "Outcomes",
     ],
-    "Baseline_Value": [3457, 66.1, 160, 777, 489, 25, 235, 190, 5.2, 61.0, 14, 42],
-    "Year1_Target": [3500, 68.0, 180, 800, 500, 40, 270, 200, 4.0, 63.0, 16, 44],
-    "Year2_Target": [3600, 70.0, 200, 830, 520, 60, 300, 215, 3.0, 66.0, 17, 47],
-    "Stretch_Target": [3800, 75.0, 250, 870, 550, 80, 350, 240, 2.0, 70.0, 19, 50],
-    "Unit": ["students", "%", "students", "students", "degrees", "courses",
-             "students", "students", "pp", "%", "programs", "%"],
+    "Baseline_Value": [3457, 66.1, 160, 777, 235, 190, 5.2, 61.0, 14, 0, 489, 42],
+    "Year1_Target": [3450, 68.0, 165, 780, 270, 200, 4.5, 63.0, 15, 8, 490, 43],
+    "Year2_Target": [3550, 70.0, 180, 800, 310, 215, 3.5, 65.0, 17, 15, 510, 45],
+    "Stretch_Target": [3700, 72.0, 200, 830, 350, 235, 2.5, 68.0, 19, 19, 530, 48],
+    "Unit": ["students", "%", "students", "students",
+             "students", "students", "pp", "%",
+             "programs", "programs", "degrees", "%"],
     "Measurement": [
-        "Fall census", "Fall-to-Fall FTFT", "Fall census", "Fall census",
-        "Annual", "Fall semester", "Fall census", "Fall census",
-        "Total pop minus First-Gen", "Fall-to-Fall AIAN", "Gray Associates assessment", "6-year rate",
+        "Fall census", "Fall-to-Fall FTFT", "Fall census (1 existing program)", "Fall census",
+        "Fall census", "Fall census",
+        "Total pop minus First-Gen", "Fall-to-Fall AIAN",
+        "Gray Associates assessment", "Programs with sunset/restructure review initiated", "Annual", "6-year rate",
     ],
 })
 
 RISK_MITIGATION = pd.DataFrame({
     "Risk": [
-        "State funding cut exceeds 5%",
-        "Online program launch delays",
-        "Key faculty departures",
+        "Native American tuition waiver misclassified as DEI and defunded",
+        "Federal DEI policy disrupts TRIO/diversity programs",
+        "State funding cut exceeds 3%",
+        "Durango housing crisis worsens faculty/staff recruitment",
         "Enrollment falls below 3,200",
         "Retention drops below 62%",
-        "AI Institute funding not secured",
-        "Political pressure on DEI programs",
+        "Tribal education funding volatility",
+        "Faculty governance blocks program restructuring",
+        "AI Institute external funding not secured",
+        "Online investment exceeds return (saturated market)",
         "Community college competition intensifies",
+        "Climate events (wildfire/drought) disrupt operations or brand",
     ],
-    "Probability": ["Medium", "Medium", "High", "Low", "Low", "Medium", "High", "Medium"],
-    "Impact": ["High", "Medium", "Medium", "High", "High", "Medium", "High", "Medium"],
+    "Probability": ["Medium", "High", "Medium", "High", "Low", "Low", "Medium", "High", "Medium", "High", "Medium", "Medium"],
+    "Impact": ["Critical", "High", "High", "High", "High", "High", "High", "High", "Medium", "Medium", "Medium", "Medium"],
     "Mitigation_Strategy": [
-        "Diversify revenue: grow graduate programs, online offerings, and auxiliary revenue. Build 6-month operating reserve.",
-        "Phase launches incrementally; start with hybrid delivery before full online. Maintain parallel in-person tracks.",
-        "Implement faculty retention package (housing, salary). Build succession plans for critical positions.",
-        "Activate emergency recruitment campaign. Accelerate dual enrollment and transfer pipelines.",
-        "Scale Compass program. Deploy early-alert system. Increase advisor-to-student ratio for at-risk populations.",
-        "Pursue alternative funding (NSF, private sector). Scale down to pilot-size if grants not secured.",
-        "Frame programs under student success and institutional mission. Diversify terminology while maintaining commitment.",
-        "Differentiate on residential experience, outdoor lifestyle, and 4-year degree completion. Strengthen transfer articulation.",
+        "Proactively document NATW legal basis (CRS 23-52-105, 1911 federal-state contract). Frame through statutory obligations and state law, not DEI. Engage state legislators and tribal partners as advocates.",
+        "Reframe Indigenous education and first-gen programs through statutory/sovereign and student success language. Maintain commitment to outcomes while adapting terminology. Document Title VI compliance.",
+        "Diversify revenue through retention gains, dual enrollment growth, and workforce partnerships. Build contingency reserve. Prioritize revenue-generating Stars programs.",
+        "Develop faculty housing partnership with City of Durango. Implement signing incentives and salary adjustments for hard-to-fill positions. Expand remote/hybrid work where possible.",
+        "Activate emergency recruitment campaign. Accelerate dual enrollment and transfer pipelines. Increase Durango-area marketing. Consider strategic tuition adjustments.",
+        "Scale Compass program college-wide. Deploy early-alert system. Increase advisor capacity for at-risk populations. Address first-gen and Native American retention gaps specifically.",
+        "Diversify Indigenous education funding sources (federal, foundation, state, tribal). Build relationships with multiple tribal nations. Document statutory obligation to maintain state support.",
+        "Engage faculty senate early in restructuring discussions. Use data-driven program review (BCG + Gray Associates) to build evidence base. Accept 12-18 month governance timeline; do not bypass shared governance.",
+        "Pursue alternative funding (NSF, private sector, foundation grants). Scale down to pilot-size if grants not secured. Maintain AI integration in curriculum regardless of institute scale.",
+        "Start with Indigenous online niche only (defensible NATW moat). Avoid generic online degrees. Pilot small before investing in marketing. Maintain parallel in-person delivery.",
+        "Differentiate on residential experience, outdoor lifestyle, and place-based education. Strengthen transfer articulation agreements. Emphasize 4-year degree completion value proposition.",
+        "Integrate climate resilience into campus planning. Develop emergency response protocols. Position sustainability programs as responsive to environmental reality, not just academic interest.",
     ],
     "Owner": [
-        "CFO", "VP Academic Affairs", "VP Academic Affairs", "VP Enrollment",
-        "VP Student Affairs", "AI Institute Director", "President/General Counsel", "VP Enrollment",
+        "President/General Counsel", "President/General Counsel", "CFO", "VP Academic Affairs/CFO",
+        "VP Enrollment", "VP Student Affairs", "Provost/President", "Provost/Faculty Senate",
+        "AI Institute Director", "VP Academic Affairs", "VP Enrollment", "VP Operations",
     ],
 })
